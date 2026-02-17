@@ -14,6 +14,7 @@ import os
 import sys
 import django
 import random
+import uuid
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
@@ -189,10 +190,10 @@ class ProductionDataSeeder:
         self.create_admin()
         self.create_voter()
         self.create_tharaka_nithi_voters()
-        self.create_teams()
-        self.create_election()
-        self.create_positions()
-        self.create_candidates()
+        self.create_election()  # MUST create election BEFORE teams
+        self.create_teams()      # Teams need election_id
+        self.create_positions()  # Positions need election_id
+        self.create_candidates() # Candidates need election_id and positions
         self.simulate_voting()
         self.publish_results()
         
@@ -321,25 +322,6 @@ class ProductionDataSeeder:
         
         print(f"  ✅ Created {created_count} new Tharaka Nithi voters")
     
-    def create_teams(self):
-        """Create participating teams"""
-        print("🏢 Creating teams...")
-        
-        for team_data in TEAMS:
-            team, created = Team.objects.get_or_create(
-                name=team_data['name'],
-                defaults={
-                    'acronym': team_data['acronym'],
-                    'color_code': team_data['color_code'],
-                    'description': f"{team_data['name']} - Official team for KUPPET Elections 2026",
-                    'is_active': True,
-                    'status': 'APPROVED'
-                }
-            )
-            self.teams[team_data['name']] = team
-            if created:
-                print(f"  ✅ Team created: {team.name}")
-    
     def create_election(self):
         """Create the main election"""
         print("🗳️ Creating election...")
@@ -375,9 +357,37 @@ class ProductionDataSeeder:
             self.election.save()
             print(f"  ℹ️ Election updated to COMPLETED")
     
+    def create_teams(self):
+        """Create participating teams (requires election)"""
+        print("🏢 Creating teams...")
+        
+        if not self.election:
+            print("  ❌ No election found! Cannot create teams.")
+            return
+        
+        for team_data in TEAMS:
+            team, created = Team.objects.get_or_create(
+                name=team_data['name'],
+                election=self.election,  # Add the election foreign key
+                defaults={
+                    'acronym': team_data['acronym'],
+                    'color_code': team_data['color_code'],
+                    'description': f"{team_data['name']} - Official team for KUPPET Elections 2026",
+                    'is_active': True,
+                    'status': 'APPROVED'
+                }
+            )
+            self.teams[team_data['name']] = team
+            if created:
+                print(f"  ✅ Team created: {team.name}")
+    
     def create_positions(self):
-        """Create all positions"""
+        """Create all positions (requires election)"""
         print("📋 Creating positions...")
+        
+        if not self.election:
+            print("  ❌ No election found! Cannot create positions.")
+            return
         
         for pos_data in POSITIONS:
             position, created = Position.objects.get_or_create(
@@ -397,6 +407,10 @@ class ProductionDataSeeder:
     def create_candidates(self):
         """Create candidates for each position"""
         print("👥 Creating candidates...")
+        
+        if not self.election:
+            print("  ❌ No election found! Cannot create candidates.")
+            return
         
         total_candidates = 0
         for position_name, candidates_list in CANDIDATES.items():
@@ -432,12 +446,18 @@ class ProductionDataSeeder:
         """Simulate voting by all voters"""
         print("🗳️ Simulating voting process...")
         
+        if not self.election:
+            print("  ❌ No election found! Cannot simulate voting.")
+            return
+        
         # Get all voters (Tharaka Nithi voters + sample voter)
         voters = list(User.objects.filter(
             user_type='VOTER',
             county='Tharaka Nithi',
             kyc_status='VERIFIED'
-        )) + [self.voter] if self.voter else []
+        ))
+        if self.voter:
+            voters.append(self.voter)
         
         if not voters:
             print("  ⚠️ No voters found, skipping voting simulation")
@@ -450,18 +470,23 @@ class ProductionDataSeeder:
             if not voter:
                 continue
                 
+            # Generate a proper UUID for vote_token
+            vote_token = uuid.uuid4()
+            
             # Create a vote for this voter
             vote = Vote.objects.create(
                 election=self.election,
                 voter=voter,
                 ip_address='127.0.0.1',
                 device_fingerprint=f"simulated_{voter.id}",
-                vote_token=f"simulated_{voter.id}_{timezone.now().timestamp()}"
+                vote_token=vote_token  # Use proper UUID
             )
             
             # For each position, randomly select a candidate with bias towards The Real Deal
             for position_name, candidates_list in CANDIDATES.items():
                 position = self.positions.get(position_name)
+                if not position:
+                    continue
                 
                 # Get candidates for this position
                 position_candidates = []
@@ -524,10 +549,12 @@ class ProductionDataSeeder:
         """Ensure results are published"""
         print("📊 Publishing results...")
         
-        self.election.results_published = True
-        self.election.save()
-        
-        print("  ✅ Results published")
+        if self.election:
+            self.election.results_published = True
+            self.election.save()
+            print("  ✅ Results published")
+        else:
+            print("  ❌ No election found")
     
     def print_credentials(self):
         """Print login credentials"""
@@ -535,30 +562,31 @@ class ProductionDataSeeder:
         print("🔐 LOGIN CREDENTIALS")
         print("="*60)
         print("\n👑 SUPER ADMIN:")
-        print(f"  Email: {SUPER_ADMIN_EMAIL}")
-        print(f"  Password: {SUPER_ADMIN_PASSWORD}")
         print(f"  TSC: {SUPER_ADMIN_TSC}")
+        print(f"  Password: {SUPER_ADMIN_PASSWORD}")
+        print(f"  Email: {SUPER_ADMIN_EMAIL}")
         
         print("\n👤 ADMIN:")
-        print(f"  Email: {ADMIN_EMAIL}")
-        print(f"  Password: {ADMIN_PASSWORD}")
         print(f"  TSC: {ADMIN_TSC}")
+        print(f"  Password: {ADMIN_PASSWORD}")
+        print(f"  Email: {ADMIN_EMAIL}")
         
         print("\n👤 SAMPLE VOTER:")
-        print(f"  Email: {VOTER_EMAIL}")
-        print(f"  Password: {VOTER_PASSWORD}")
         print(f"  TSC: {VOTER_TSC}")
+        print(f"  Password: {VOTER_PASSWORD}")
+        print(f"  Email: {VOTER_EMAIL}")
         
         print("\n👥 THARAKA NITHI VOTERS:")
         print(f"  Password for all: Voter@2026")
-        print(f"  Sample voter: {THARAKA_NITHI_VOTERS[0]['tsc_number']}@agora.ke")
+        print(f"  Example: TSC: TN001, Email: tn001@agora.ke")
         
         print("\n📊 ELECTION SUMMARY:")
         print(f"  Election: KUPPET Elections 2026")
         print(f"  Status: COMPLETED")
         print(f"  Positions: {len(POSITIONS)}")
         print(f"  Teams: {len(TEAMS)}")
-        print(f"  Votes Cast: {self.election.total_votes_cast if self.election else 0}")
+        if self.election:
+            print(f"  Votes Cast: {self.election.total_votes_cast}")
         print("="*60)
 
 
