@@ -1,5 +1,5 @@
 /**
- * AGORA VOTING - DEVICE FINGERPRINTING
+ * KUPPET VOTING - DEVICE FINGERPRINTING
  * Generates unique device identifier for "One-Device-One-Vote" security
  */
 

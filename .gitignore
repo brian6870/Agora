@@ -66,7 +66,6 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
-staticfiles/
 
 # Flask stuff
 instance/
@@ -160,10 +159,7 @@ documents/
 *.xlsx
 !.gitkeep
 
-# ==================== STATIC FILES ====================
-staticfiles/
-static_collected/
-static_root/
+
 *.css.map
 *.js.map
 

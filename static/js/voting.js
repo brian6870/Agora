@@ -1,5 +1,5 @@
 /**
- * AGORA VOTING - BALLOT LOGIC
+ * KUPPET VOTING - BALLOT LOGIC
  * Handles candidate selection and vote submission
  */
 

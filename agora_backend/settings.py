@@ -274,7 +274,7 @@ logs_dir.mkdir(parents=True, exist_ok=True)
 
 # ==================== DEBUG OUTPUT ====================
 print("\n" + "="*60)
-print("🚀 AGORA VOTING SYSTEM CONFIGURATION")
+print("🚀 KUPPET VOTING SYSTEM CONFIGURATION")
 print("="*60)
 print(f"🔧 DEBUG Mode: {DEBUG}")
 print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
