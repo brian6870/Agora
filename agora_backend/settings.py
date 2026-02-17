@@ -105,7 +105,7 @@ WSGI_APPLICATION = 'agora_backend.wsgi.application'
 import dj_database_url
 
 if DEBUG:
-    # Development: SQLite
+    # Development: SQLite - NO SSL MODE
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -113,13 +113,27 @@ if DEBUG:
         }
     }
 else:
-    # Production: Use DATABASE_URL from Render
-    DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
+    # Production: PostgreSQL from DATABASE_URL
+    # Get the database URL from environment
+    database_url = os.environ.get('DATABASE_URL')
+    
+    if database_url and database_url.startswith('postgres'):
+        # PostgreSQL - with SSL
+        DATABASES = {
+            'default': dj_database_url.config(
+                conn_max_age=600,
+                ssl_require=True  # This adds sslmode=require for PostgreSQL
+            )
+        }
+    else:
+        # Fallback to SQLite if no PostgreSQL URL (shouldn't happen on Render)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'agora.db',
+            }
+        }
+        print("⚠️ WARNING: Using SQLite in production! Set DATABASE_URL for PostgreSQL.")
 
 # ==================== AUTHENTICATION ====================
 AUTH_USER_MODEL = 'accounts.User'
