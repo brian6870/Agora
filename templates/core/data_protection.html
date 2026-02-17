@@ -1,0 +1,107 @@
+{% extends 'core/base_page.html' %}
+
+{% block page_content %}
+<div class="space-y-8">
+    <div class="text-center mb-12">
+        <span class="inline-block px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-sm text-sm text-gray-700 dark:text-gray-300 mb-4">
+        </span>
+    </div>
+    
+    <div class="prose prose-lg max-w-none text-gray-700 dark:text-gray-300">
+        <p class="lead">
+            At Agora, we implement comprehensive data protection measures to safeguard your personal information.
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Data Protection Principles</h3>
+        
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <i class="fas fa-lock text-gray-700 dark:text-gray-300 mb-2"></i>
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Encryption</h4>
+                <p class="text-sm">AES-256 encryption for data at rest, TLS 1.3 for data in transit</p>
+            </div>
+            
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <i class="fas fa-user-shield text-gray-700 dark:text-gray-300 mb-2"></i>
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Access Control</h4>
+                <p class="text-sm">Strict role-based access with audit logging</p>
+            </div>
+            
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <i class="fas fa-history text-gray-700 dark:text-gray-300 mb-2"></i>
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Audit Trail</h4>
+                <p class="text-sm">Complete logs of all data access and modifications</p>
+            </div>
+            
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <i class="fas fa-database text-gray-700 dark:text-gray-300 mb-2"></i>
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Data Minimization</h4>
+                <p class="text-sm">We collect only necessary information</p>
+            </div>
+        </div>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Your Rights Under Data Protection Law</h3>
+        
+        <div class="space-y-3">
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-check-circle text-green-600 dark:text-green-400 mt-1"></i>
+                <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white">Right to Access</h4>
+                    <p class="text-sm">Request a copy of your personal data</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-check-circle text-green-600 dark:text-green-400 mt-1"></i>
+                <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white">Right to Rectification</h4>
+                    <p class="text-sm">Correct inaccurate or incomplete data</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-check-circle text-green-600 dark:text-green-400 mt-1"></i>
+                <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white">Right to Erasure</h4>
+                    <p class="text-sm">Request deletion of your data (subject to election record retention)</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-check-circle text-green-600 dark:text-green-400 mt-1"></i>
+                <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white">Right to Restrict Processing</h4>
+                    <p class="text-sm">Limit how we use your data</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-check-circle text-green-600 dark:text-green-400 mt-1"></i>
+                <div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white">Right to Data Portability</h4>
+                    <p class="text-sm">Receive your data in a structured format</p>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Data Retention</h3>
+        <p>
+            Election records are retained as required by union regulations. After the retention period, personal data is securely deleted or anonymized.
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Data Breach Response</h3>
+        <p>
+            In the event of a data breach, we will notify affected users and relevant authorities within 72 hours, as required by law.
+        </p>
+        
+        <div class="mt-8 p-6 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-2xl">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Contact Our Data Protection Officer</h4>
+            <p class="text-sm">
+                Email: <a href="mailto:dpo@agora.ke" class="text-gray-900 dark:text-white hover:underline">dpo@agora.ke</a><br>
+                Phone: 020-123-4567<br>
+                Address: Nairobi, Kenya
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

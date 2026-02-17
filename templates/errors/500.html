@@ -1,0 +1,33 @@
+
+<!-- templates/errors/500.html -->
+{% extends 'base.html' %}
+
+{% block title %}Server Error - Agora{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h1 class="display-1 text-danger">500</h1>
+            <h2 class="mb-4">Server Error</h2>
+            
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Something went wrong on our end. Please try again later.
+            </div>
+            
+            <p class="lead">Our technical team has been notified of this issue.</p>
+            
+            <div class="mt-5">
+                <a href="{% url 'landing' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home"></i> Return Home
+                </a>
+                
+                <button onclick="location.reload()" class="btn btn-secondary btn-lg ms-2">
+                    <i class="fas fa-sync"></i> Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

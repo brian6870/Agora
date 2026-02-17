@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Team - Agora{% endblock %}
+
+{% block content %}
+<!-- Fixed navbar spacer - this pushes content below the fixed navbar -->
+<div class="h-24 md:h-28 lg:h-32"></div>
+
+<!-- Main scrollable content container -->
+<div class="fixed inset-0 top-24 md:top-28 lg:top-32 overflow-y-auto" style="z-index: 1;">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        
+        <!-- Header with 3D Text Effect -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-semibold text-gray-900 dark:text-white mb-4 hero-text">
+                Add a Team
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Form a team or alliance to participate in the upcoming elections
+            </p>
+        </div>
+
+        <!-- Show existing application warning if any -->
+        {% if existing_application %}
+        <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-triangle text-yellow-500 mt-1"></i>
+                <div>
+                    <h4 class="text-sm font-medium text-yellow-600 dark:text-yellow-400">You already have a pending application</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">
+                        You have already submitted a team application for this election. 
+                        <a href="{% url 'core:application_status' %}" class="underline">View your application status</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Form Card -->
+        <div class="bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-3xl p-6 md:p-8 lg:p-10">
+            <form method="post" enctype="multipart/form-data" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Election Selection -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Election <span class="text-red-500">*</span>
+                    </label>
+                    <select name="election" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                        <option value="">Select an election</option>
+                        {% for election in elections %}
+                        <option value="{{ election.id }}" {% if selected_election and selected_election.id == election.id %}selected{% endif %}>
+                            {{ election.name }} 
+                            {% if election.election_type == 'COUNTY' %}
+                                ({{ election.county }} County)
+                            {% else %}
+                                (National)
+                            {% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Choose the election you want to participate in
+                    </p>
+                </div>
+
+                <!-- Team Name -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Team Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           name="name" 
+                           required
+                           maxlength="100"
+                           placeholder="e.g., United Teachers Alliance"
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Choose a unique name for your team
+                    </p>
+                </div>
+
+                <!-- Acronym (Optional) -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Acronym <span class="text-gray-400 text-xs">(Optional)</span>
+                    </label>
+                    <input type="text" 
+                           name="acronym" 
+                           maxlength="20"
+                           placeholder="e.g., UTA"
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Short abbreviation for your team (optional)
+                    </p>
+                </div>
+
+                <!-- Team Color -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Team Color <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="color" 
+                               name="color_code" 
+                               value="#000000"
+                               class="w-16 h-16 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   name="color_code_hex" 
+                                   value="#000000"
+                                   maxlength="7"
+                                   pattern="^#[0-9A-Fa-f]{6}$"
+                                   placeholder="#000000"
+                                   class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Choose a color to represent your team on ballots
+                    </p>
+                </div>
+
+                <!-- Team Logo -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Team Logo <span class="text-gray-400 text-xs">(Optional)</span>
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-6 text-center hover:border-gray-400 dark:hover:border-gray-600 transition cursor-pointer"
+                         onclick="document.getElementById('logoInput').click()">
+                        <div class="w-16 h-16 rounded-full bg-gray-200/50 dark:bg-gray-800/50 flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-cloud-upload-alt text-2xl text-gray-500 dark:text-gray-400"></i>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Click to upload team logo</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                        <input type="file" 
+                               id="logoInput"
+                               name="logo" 
+                               accept="image/*"
+                               class="hidden"
+                               onchange="handleFileSelect(this)">
+                    </div>
+                    <div id="fileInfo" class="hidden mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span id="fileName" class="text-sm text-green-700 dark:text-green-300"></span>
+                        </div>
+                        <button type="button" onclick="removeFile()" class="text-green-500 hover:text-green-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Team Description <span class="text-gray-400 text-xs">(Optional)</span>
+                    </label>
+                    <textarea name="description" 
+                              rows="4"
+                              maxlength="500"
+                              placeholder="Tell us about your team, its mission, and values..."
+                              class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all"></textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                        <span id="charCount">0</span>/500 characters
+                    </p>
+                </div>
+
+                <!-- Declaration -->
+                <div class="pt-6 border-t border-white/30 dark:border-white/10">
+                    <label class="flex items-start gap-3">
+                        <input type="checkbox" name="confirm" required class="checkbox mt-1">
+                        <span class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                            I declare that I am authorized to create this team and that all information provided is accurate. 
+                            I understand that this application will be reviewed by administrators and may take 1-2 business days to process.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                    <a href="{% url 'core:elections' %}" 
+                       class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium text-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-8 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:scale-[0.98] transition-all duration-300">
+                        Submit Application
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- File Preview Modal -->
+<div id="previewModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePreviewModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl max-w-lg w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Logo Preview</h3>
+                <button onclick="closePreviewModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="previewImage" class="w-full h-48 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+                <img id="previewImg" src="" alt="Preview" class="max-w-full max-h-full object-contain">
+            </div>
+            <div class="mt-4 flex justify-end space-x-3">
+                <button onclick="closePreviewModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Close
+                </button>
+                <button onclick="useCurrentFile()" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Use This Image
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 3D Text Effect */
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+/* Custom scrollbar for the main content area */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Custom file input styling */
+input[type="file"] {
+    display: none;
+}
+
+/* Color input synchronization */
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 10px;
+}
+</style>
+
+<script>
+// Handle color input sync
+document.addEventListener('DOMContentLoaded', function() {
+    const colorPicker = document.querySelector('input[type="color"]');
+    const hexInput = document.querySelector('input[name="color_code_hex"]');
+    
+    if (colorPicker && hexInput) {
+        // Update hex input when color picker changes
+        colorPicker.addEventListener('input', function() {
+            hexInput.value = this.value;
+        });
+        
+        // Update color picker when hex input changes
+        hexInput.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                colorPicker.value = this.value;
+            }
+        });
+    }
+    
+    // Character counter for description
+    const descInput = document.querySelector('textarea[name="description"]');
+    const charCount = document.getElementById('charCount');
+    
+    if (descInput && charCount) {
+        descInput.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+    }
+});
+
+// Handle file selection
+let currentFile = null;
+
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    currentFile = file;
+    
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit');
+        input.value = '';
+        return;
+    }
+    
+    // Show file info
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileInfo').classList.remove('hidden');
+    
+    // Preview image
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('previewImg').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeFile() {
+    document.getElementById('logoInput').value = '';
+    document.getElementById('fileInfo').classList.add('hidden');
+    document.getElementById('previewImg').src = '';
+    currentFile = null;
+}
+
+function previewLogo() {
+    if (currentFile) {
+        document.getElementById('previewModal').classList.remove('hidden');
+    }
+}
+
+function closePreviewModal() {
+    document.getElementById('previewModal').classList.add('hidden');
+}
+
+function useCurrentFile() {
+    closePreviewModal();
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreviewModal();
+    }
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const confirmCheckbox = document.querySelector('input[name="confirm"]');
+    if (!confirmCheckbox.checked) {
+        e.preventDefault();
+        alert('Please confirm the declaration to proceed');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Election Date Settings - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Election Date Settings</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Configure election dates and important deadlines</p>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Current Election Date -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Current Election Schedule</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Voting Date</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ election.voting_date|date:"l, F j, Y"|default:'Not Set' }}</p>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Start Time</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ election.voting_start_time|time:"g:i A"|default:'Not Set' }}</p>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">End Time</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ election.voting_end_time|time:"g:i A"|default:'Not Set' }}</p>
+                </div>
+            </div>
+
+            <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1 mr-3"></i>
+                    <div>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">
+                            <strong>Time Zone:</strong> All times are in East Africa Time (EAT, UTC+3)
+                        </p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            Current server time: {% now "F j, Y H:i:s" %} EAT
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Set Election Date -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Set Election Date</h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Voting Date</label>
+                        <input type="date" name="voting_date" value="{{ election.voting_date|date:'Y-m-d' }}" class="form-input" required min="{% now 'Y-m-d' %}">
+                        <p class="text-xs text-gray-500 mt-1">Must be today or a future date</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Alternative Date (if rescheduled)</label>
+                        <input type="date" name="alternative_date" value="{{ election.alternative_date|date:'Y-m-d' }}" class="form-input" min="{% now 'Y-m-d' %}">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Time</label>
+                        <input type="time" name="start_time" value="{{ election.voting_start_time|time:'H:i' }}" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Time</label>
+                        <input type="time" name="end_time" value="{{ election.voting_end_time|time:'H:i' }}" class="form-input" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Election Name/Session</label>
+                    <input type="text" name="election_name" value="{{ election.election_name|default:'Teacher Union Elections 2024' }}" class="form-input" placeholder="e.g., 2024 Annual Elections">
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="submit" name="action" value="set_date" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Set Election Date
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Important Deadlines -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Important Deadlines</h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Registration Deadline</label>
+                        <input type="date" name="registration_deadline" value="{{ deadlines.registration|date:'Y-m-d' }}" class="form-input">
+                        <p class="text-xs text-gray-500 mt-1">Last day for voter registration</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">KYC Submission Deadline</label>
+                        <input type="date" name="kyc_deadline" value="{{ deadlines.kyc|date:'Y-m-d' }}" class="form-input">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Candidate Nomination Deadline</label>
+                        <input type="date" name="nomination_deadline" value="{{ deadlines.nomination|date:'Y-m-d' }}" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Campaign Period End</label>
+                        <input type="date" name="campaign_end" value="{{ deadlines.campaign_end|date:'Y-m-d' }}" class="form-input">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Device Reset Deadline</label>
+                        <input type="date" name="device_reset_deadline" value="{{ deadlines.device_reset|date:'Y-m-d' }}" class="form-input">
+                        <p class="text-xs text-gray-500 mt-1">3 days before voting</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Results Publication Date</label>
+                        <input type="date" name="results_date" value="{{ deadlines.results|date:'Y-m-d' }}" class="form-input">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="submit" name="action" value="set_deadlines" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Deadlines
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Date Preview Calendar -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Election Calendar</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Mini Calendar -->
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                    <div class="text-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">{% now "F Y" %}</h3>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+                        <div class="text-gray-500">S</div>
+                        <div class="text-gray-500">M</div>
+                        <div class="text-gray-500">T</div>
+                        <div class="text-gray-500">W</div>
+                        <div class="text-gray-500">T</div>
+                        <div class="text-gray-500">F</div>
+                        <div class="text-gray-500">S</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center">
+                        {% for day in calendar_days %}
+                        <div class="p-1 {% if day == election.voting_date.day %}bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full{% endif %}">
+                            {{ day }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Key Dates List -->
+                <div class="space-y-3">
+                    <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="w-3 h-3 rounded-full bg-red-500 mr-3"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">Election Day</p>
+                            <p class="text-xs text-gray-500">{{ election.voting_date|date:"l, F j, Y"|default:'Not set' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="w-3 h-3 rounded-full bg-yellow-500 mr-3"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">Registration Closes</p>
+                            <p class="text-xs text-gray-500">{{ deadlines.registration|date:"l, F j, Y"|default:'Not set' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="w-3 h-3 rounded-full bg-blue-500 mr-3"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">Nominations Close</p>
+                            <p class="text-xs text-gray-500">{{ deadlines.nomination|date:"l, F j, Y"|default:'Not set' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">Results Published</p>
+                            <p class="text-xs text-gray-500">{{ deadlines.results|date:"l, F j, Y"|default:'Not set' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Change History -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Date Change History</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-left py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Date</th>
+                            <th class="text-left py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Changed By</th>
+                            <th class="text-left py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Old Date</th>
+                            <th class="text-left py-3 text-sm font-medium text-gray-500 dark:text-gray-400">New Date</th>
+                            <th class="text-left py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for change in date_changes %}
+                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                            <td class="py-3 text-sm text-gray-600 dark:text-gray-400">{{ change.changed_at|date:"M j, Y H:i" }}</td>
+                            <td class="py-3 text-sm text-gray-600 dark:text-gray-400">{{ change.changed_by.full_name }}</td>
+                            <td class="py-3 text-sm text-gray-600 dark:text-gray-400">{{ change.old_date|date:"M j, Y" }}</td>
+                            <td class="py-3 text-sm text-gray-600 dark:text-gray-400">{{ change.new_date|date:"M j, Y" }}</td>
+                            <td class="py-3 text-sm text-gray-600 dark:text-gray-400">{{ change.reason|truncatechars:30 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-4 text-center text-gray-500 dark:text-gray-400">No date changes recorded</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validate that end time is after start time
+document.querySelector('input[name="end_time"]').addEventListener('change', function() {
+    const startTime = document.querySelector('input[name="start_time"]').value;
+    const endTime = this.value;
+    
+    if (startTime && endTime && endTime <= startTime) {
+        alert('End time must be after start time');
+        this.value = '';
+    }
+});
+
+// Confirm date changes
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        if (this.querySelector('input[name="voting_date"]')) {
+            const newDate = this.querySelector('input[name="voting_date"]').value;
+            const currentDate = "{{ election.voting_date|date:'Y-m-d' }}";
+            
+            if (newDate !== currentDate && currentDate) {
+                if (!confirm('Changing the election date will affect all registered voters. Are you sure?')) {
+                    e.preventDefault();
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

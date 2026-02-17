@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Agora{% endblock %}
+
+{% block content %}
+<!-- Fixed navbar spacer - this pushes content below the fixed navbar -->
+<div class="h-24 md:h-28 lg:h-32"></div>
+
+<!-- Main scrollable content container -->
+<div class="fixed inset-0 top-24 md:top-28 lg:top-32 overflow-y-auto" style="z-index: 1;">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        
+        <!-- Simple Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white mb-2">
+                Dashboard
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400">
+                Welcome back, <span class="font-medium">{{ user.full_name|title }}</span>
+            </p>
+        </div>
+
+        <!-- KYC Status Alert - Only show if action needed -->
+        {% if user.is_authenticated and user.user_type == 'VOTER' %}
+            {% if user.kyc_status == 'PENDING' %}
+            <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-clock text-yellow-500 mt-1"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-yellow-600 dark:text-yellow-400">KYC Verification Pending</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Your documents are being reviewed.</p>
+                    </div>
+                </div>
+            </div>
+            {% elif user.kyc_status == 'REJECTED' %}
+            <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-circle text-red-500 mt-1"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-red-600 dark:text-red-400">KYC Verification Rejected</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">
+                            <a href="{% url 'accounts:kyc_upload' %}" class="underline">Resubmit your documents</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not user.tsc_verified and user.kyc_status == 'VERIFIED' %}
+            <div class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-school text-blue-500 mt-1"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-blue-600 dark:text-blue-400">TSC Verification Pending</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Your TSC number is being verified.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Main Action Buttons Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <!-- Vote Button (if eligible) -->
+            {% if not user.has_voted and user.kyc_status == 'VERIFIED' and user.tsc_verified and election and election.is_voting_open %}
+            <a href="{% url 'core:voting_area' %}" 
+               class="col-span-full mb-2 block w-full py-4 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-xl text-center font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-vote-yea mr-2"></i>
+                Cast Your Vote Now
+            </a>
+            {% endif %}
+
+            <!-- Application Status Button -->
+            <a href="{% url 'core:application_status' %}" 
+               class="flex items-center justify-between p-4 bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-xl hover:border-white/50 transition-all group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-200/50 dark:bg-gray-800/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-file-alt text-gray-600 dark:text-gray-400"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">Application Status</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Track your applications</div>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition"></i>
+            </a>
+
+            <!-- Elections Button (This goes to the elections list page) -->
+            <a href="{% url 'core:elections' %}" 
+               class="flex items-center justify-between p-4 bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-xl hover:border-white/50 transition-all group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-200/50 dark:bg-gray-800/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-calendar-alt text-gray-600 dark:text-gray-400"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">Elections</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">View all elections</div>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition"></i>
+            </a>
+
+            <!-- Results Button -->
+            <a href="{% url 'core:results' %}" 
+               class="flex items-center justify-between p-4 bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-xl hover:border-white/50 transition-all group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-200/50 dark:bg-gray-800/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-bar text-gray-600 dark:text-gray-400"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">Live Results</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Real-time updates</div>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition"></i>
+            </a>
+        </div>
+
+        <!-- Quick Actions for Candidates/Teams -->
+        {% if user.kyc_status == 'VERIFIED' and user.tsc_verified %}
+        <div class="mt-6 pt-6 border-t border-white/30 dark:border-white/10">
+            <h2 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Want to participate?</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="{% url 'core:apply_candidate' %}" 
+                   class="text-center px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Apply as Candidate
+                </a>
+                <a href="{% url 'core:create_team' %}" 
+                   class="text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Create Team
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Smooth transitions */
+a {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for the main content area */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+</style>
+{% endblock %}

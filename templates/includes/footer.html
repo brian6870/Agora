@@ -1,0 +1,133 @@
+{% load static %}
+<!-- Footer -->
+<footer class="w-full backdrop-blur-sm bg-transparent border-t border-white/30 dark:border-white/20 py-8 mt-auto">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <!-- About Section -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">About</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'core:about' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            About Us
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:mission' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Our Mission
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:how_it_works' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            How It Works
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:security' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Security
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:faq' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            FAQ
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Policies Section -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Policies</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'core:privacy_policy' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Privacy Policy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:terms_of_service' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Terms of Service
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:cookie_policy' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Cookie Policy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:data_protection' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Data Protection
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Portals Section -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Portals</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'admin_panel:dashboard' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Admin Portal
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:dashboard' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Voter Portal
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:results' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Results Portal
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Quick Links Section -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'landing' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'accounts:login' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Login
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'accounts:register' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Register
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'accounts:device_reset' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Device Reset
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'accounts:password_reset_request' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                            Forgot Password
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Copyright Section -->
+        <div class="mt-8 pt-6 border-t border-white/30 dark:border-white/20">
+            <p class="text-center text-xs text-gray-500 dark:text-gray-500">
+                &copy; {% now "Y" %} Agora. All rights reserved. 
+                <span class="mx-2">|</span>
+                <a href="{% url 'core:privacy_policy' %}" class="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">Privacy</a>
+                <span class="mx-2">|</span>
+                <a href="{% url 'core:terms_of_service' %}" class="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">Terms</a>
+                <span class="mx-2">|</span>
+                <a href="{% url 'core:cookie_policy' %}" class="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">Cookies</a>
+            </p>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,276 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Notifications - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Manage system notifications</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="markAllAsRead()" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-check-double mr-2"></i>Mark All Read
+            </button>
+            <!-- REMOVED: New Notification button - URL doesn't exist -->
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex space-x-1 mb-6">
+        <a href="?filter=all" class="tab-btn px-4 py-2 rounded-full text-sm font-medium transition {% if filter == 'all' or not filter %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            All
+        </a>
+        <a href="?filter=unread" class="tab-btn px-4 py-2 rounded-full text-sm font-medium transition {% if filter == 'unread' %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Unread
+        </a>
+        <a href="?filter=action" class="tab-btn px-4 py-2 rounded-full text-sm font-medium transition {% if filter == 'action' %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Action Required
+        </a>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="space-y-4">
+        {% for notification in notifications %}
+        <div class="notification-item glass-card p-6 {% if not notification.is_read %}border-l-4 border-blue-500{% endif %}" data-id="{{ notification.id }}">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        {% if notification.notification_type == 'SUCCESS' %}
+                        <span class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                        </span>
+                        {% elif notification.notification_type == 'WARNING' %}
+                        <span class="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                        </span>
+                        {% elif notification.notification_type == 'ERROR' %}
+                        <span class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-times-circle text-red-600 dark:text-red-400"></i>
+                        </span>
+                        {% elif notification.notification_type == 'ACTION_REQUIRED' %}
+                        <span class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mr-3">
+                            <i class="fas fa-bell text-blue-600 dark:text-blue-400"></i>
+                        </span>
+                        {% else %}
+                        <span class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
+                            <i class="fas fa-info-circle text-gray-600 dark:text-gray-400"></i>
+                        </span>
+                        {% endif %}
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ notification.title }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ notification.created_at|timesince }} ago</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 ml-11">{{ notification.message }}</p>
+                    
+                    {% if notification.action_url %}
+                    <div class="mt-3 ml-11">
+                        <a href="{{ notification.action_url }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                            Take Action <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if not notification.is_read %}
+                <button onclick="markAsRead({{ notification.id }})" class="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Mark as read">
+                    <i class="fas fa-check-circle"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-card p-12 text-center">
+            <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-bell-slash text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">No Notifications</h3>
+            <p class="text-gray-600 dark:text-gray-400">You're all caught up!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="flex justify-center mt-8">
+        <nav class="flex space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if filter %}&filter={{ filter }}{% endif %}" 
+               class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                Previous
+            </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if filter %}&filter={{ filter }}{% endif %}" 
+               class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                Next
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notification Toast Container -->
+<div id="notificationToast" class="fixed top-24 right-4 z-50 hidden">
+    <div class="glass-card p-4 border-l-4 border-green-500">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300" id="toastMessage"></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+.notification-item {
+    transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+}
+
+/* Toast animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+#notificationToast:not(.hidden) {
+    display: block;
+    animation: slideIn 0.3s ease-out;
+}
+</style>
+
+<script>
+function filterNotifications(filter) {
+    window.location.href = `?filter=${filter}`;
+}
+
+function markAsRead(notificationId) {
+    fetch(`/admin-panel/notifications/${notificationId}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove the notification or update its appearance
+            const notification = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+            if (notification) {
+                notification.classList.remove('border-l-4', 'border-blue-500');
+                const button = notification.querySelector('button');
+                if (button) button.remove();
+            }
+            showToast('Notification marked as read');
+            
+            // Update unread count in sidebar
+            updateUnreadCount();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error marking notification as read', 'error');
+    });
+}
+
+function markAllAsRead() {
+    if (!confirm('Mark all notifications as read?')) return;
+    
+    fetch('/admin-panel/notifications/read-all/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update all notifications
+            document.querySelectorAll('.notification-item').forEach(notification => {
+                notification.classList.remove('border-l-4', 'border-blue-500');
+                const button = notification.querySelector('button');
+                if (button) button.remove();
+            });
+            showToast('All notifications marked as read');
+            
+            // Update unread count in sidebar
+            updateUnreadCount();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error marking notifications', 'error');
+    });
+}
+
+function updateUnreadCount() {
+    fetch('{% url "admin_panel:unread_notifications_count" %}')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                badge.textContent = data.count || 0;
+            }
+        })
+        .catch(err => console.log('Error updating unread count:', err));
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('notificationToast');
+    const messageEl = document.getElementById('toastMessage');
+    
+    messageEl.textContent = message;
+    toast.classList.remove('hidden');
+    
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Auto-refresh unread count periodically
+setInterval(updateUnreadCount, 30000);
+</script>
+{% endblock %}

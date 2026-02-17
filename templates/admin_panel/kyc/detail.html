@@ -1,0 +1,383 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}KYC Details - {{ voter.full_name }} - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-6">
+        <a href="{% url 'admin_panel:pending_kyc' %}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Pending KYC
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Voter Info Card -->
+        <div class="glass-card p-6 lg:col-span-1">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Voter Information</h3>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Name</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.full_name }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">TSC Number</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.tsc_number }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">ID Number</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.id_number }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.email }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Phone</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.phone_number|default:'Not provided' }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">County</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.county }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">School</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.school }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Submitted</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.kyc_submitted_at|date:"M j, Y, g:i a" }}</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons - Direct Forms -->
+            <div class="mt-6 space-y-3">
+                <!-- Verify Form -->
+                <form method="post" action="{% url 'admin_panel:verify_kyc' voter.id %}" onsubmit="return confirmVerify()">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full px-4 py-3 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transform hover:-translate-y-1 transition-all duration-200">
+                        <i class="fas fa-check mr-2"></i>
+                        Verify KYC
+                    </button>
+                </form>
+
+                <!-- Reject Form with Inline Reason -->
+                <div class="reject-container relative">
+                    <button type="button" onclick="toggleRejectForm(this)" class="w-full px-4 py-3 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transform hover:-translate-y-1 transition-all duration-200">
+                        <i class="fas fa-times mr-2"></i>
+                        Reject KYC
+                    </button>
+
+                    <!-- Inline Reject Form (hidden by default) -->
+                    <div id="rejectForm" class="hidden mt-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <form method="post" action="{% url 'admin_panel:reject_kyc' voter.id %}" id="rejectFormInner">
+                            {% csrf_token %}
+                            
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Reason for Rejection</h4>
+                            
+                            <select name="reason" id="rejectReason" class="form-select w-full mb-3" required>
+                                <option value="">Select a reason</option>
+                                <option value="Blurry or unclear images">Blurry or unclear images</option>
+                                <option value="ID document expired">ID document expired</option>
+                                <option value="Information mismatch">Information mismatch</option>
+                                <option value="Face photo doesn't match ID">Face photo doesn't match ID</option>
+                                <option value="Suspected forgery">Suspected forgery</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            
+                            <textarea name="custom_reason" id="customReason" class="form-textarea w-full text-sm hidden" rows="2" placeholder="Please specify the reason..."></textarea>
+                            
+                            <div class="flex justify-end space-x-2 mt-3">
+                                <button type="button" onclick="cancelReject()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300 transition">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition">
+                                    Confirm Rejection
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Badge (if already processed) -->
+            {% if voter.kyc_status != 'PENDING' %}
+            <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-medium">Status:</span> 
+                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium
+                        {% if voter.kyc_status == 'VERIFIED' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                        {% elif voter.kyc_status == 'REJECTED' %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400
+                        {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                        {{ voter.get_kyc_status_display }}
+                    </span>
+                </p>
+                {% if voter.kyc_verified_at %}
+                <p class="text-xs text-gray-500 mt-2">
+                    Processed: {{ voter.kyc_verified_at|date:"M j, Y, g:i a" }}
+                    {% if voter.kyc_verified_by %}
+                    by {{ voter.kyc_verified_by.full_name }}
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Document Previews -->
+        <div class="glass-card p-6 lg:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Identity Documents</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- ID Front -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Front</h4>
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                        {% if voter.id_front %}
+                        <img src="{{ voter.id_front.url }}" alt="ID Front" class="w-full rounded-lg cursor-pointer hover:opacity-90 transition" onclick="openImageModal('{{ voter.id_front.url }}')">
+                        {% else %}
+                        <div class="h-48 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-image fa-3x"></i>
+                            <p class="mt-2 text-sm">Not uploaded</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ID Back -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Back</h4>
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                        {% if voter.id_back %}
+                        <img src="{{ voter.id_back.url }}" alt="ID Back" class="w-full rounded-lg cursor-pointer hover:opacity-90 transition" onclick="openImageModal('{{ voter.id_back.url }}')">
+                        {% else %}
+                        <div class="h-48 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-image fa-3x"></i>
+                            <p class="mt-2 text-sm">Not uploaded</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Face Photo -->
+                <div class="md:col-span-2">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Face Photo / Selfie</h4>
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                        {% if voter.face_photo %}
+                        <img src="{{ voter.face_photo.url }}" alt="Face Photo" class="max-h-64 mx-auto rounded-lg cursor-pointer hover:opacity-90 transition" onclick="openImageModal('{{ voter.face_photo.url }}')">
+                        {% else %}
+                        <div class="h-48 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-user fa-3x"></i>
+                            <p class="mt-2 text-sm">Not uploaded</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Notes -->
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Verification Notes</h4>
+                <textarea class="form-textarea w-full" rows="3" placeholder="Add verification notes..." id="verificationNotes"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal (kept for image viewing) -->
+<div id="imageModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="relative">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white hover:text-gray-300">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            <img id="modalImage" src="" alt="Document" class="max-h-[90vh] max-w-[90vw] rounded-lg">
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast Container -->
+<div id="notification-container" class="fixed top-24 right-4 z-50 space-y-2 w-80"></div>
+
+<script>
+// Image modal functions (keep for image viewing)
+function openImageModal(imageUrl) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+}
+
+// Toggle reject form
+function toggleRejectForm(button) {
+    const rejectForm = document.getElementById('rejectForm');
+    rejectForm.classList.toggle('hidden');
+    
+    // Scroll to the form smoothly
+    if (!rejectForm.classList.contains('hidden')) {
+        setTimeout(() => {
+            rejectForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+}
+
+// Cancel reject
+function cancelReject() {
+    document.getElementById('rejectForm').classList.add('hidden');
+    document.getElementById('rejectReason').value = '';
+    document.getElementById('customReason').classList.add('hidden');
+    document.getElementById('customReason').value = '';
+}
+
+// Handle custom reason field
+document.getElementById('rejectReason')?.addEventListener('change', function() {
+    const customField = document.getElementById('customReason');
+    if (this.value === 'Other') {
+        customField.classList.remove('hidden');
+        customField.required = true;
+    } else {
+        customField.classList.add('hidden');
+        customField.required = false;
+    }
+});
+
+// Confirm verify
+function confirmVerify() {
+    return confirm('Are you sure you want to verify KYC for {{ voter.full_name }}?');
+}
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notification-container');
+    const notification = document.createElement('div');
+    
+    notification.className = `glass-card p-4 border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'} animate-slide-in`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Handle verify form with AJAX (optional for smoother experience)
+document.querySelector('form[action*="verify_kyc"]')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!confirmVerify()) return;
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showNotification('KYC verified successfully', 'success');
+            setTimeout(() => {
+                window.location.href = '{% url "admin_panel:pending_kyc" %}';
+            }, 1500);
+        } else {
+            showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showNotification('Network error. Please try again.', 'error');
+    }
+});
+
+// Handle reject form with AJAX
+document.getElementById('rejectFormInner')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            showNotification('KYC rejected', 'success');
+            setTimeout(() => {
+                window.location.href = '{% url "admin_panel:pending_kyc" %}';
+            }, 1500);
+        } else {
+            showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showNotification('Network error. Please try again.', 'error');
+    }
+});
+
+// Close image modal on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+    }
+});
+
+// Close image modal when clicking outside
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('imageModal')) {
+        closeImageModal();
+    }
+});
+
+// Add animation styles
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    .animate-slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .reject-form-enter {
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

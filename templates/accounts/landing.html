@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Agora - Secure Voting Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Background */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    /* Light mode stars - black */
+    .light .star {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Dark mode stars - white */
+    .dark .star {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes twinkle {
+        0%, 100% {
+            opacity: 0.2;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+    
+    /* 3D Card Effect */
+    .hero-text {
+        text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transform: perspective(1000px) rotateX(0deg);
+        transition: transform 0.3s ease;
+    }
+    
+    .hero-text:hover {
+        transform: perspective(1000px) rotateX(2deg) translateZ(20px);
+    }
+    
+    /* Footer Styles */
+    .footer-link {
+        transition: all 0.2s ease;
+    }
+    
+    .footer-link:hover {
+        transform: translateX(4px);
+    }
+    
+    /* Admin Portal Button */
+    .admin-portal-btn {
+        background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+        transition: all 0.3s ease;
+    }
+    
+    .admin-portal-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.2);
+    }
+    
+    .dark .admin-portal-btn {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    }
+    
+    /* Scroll Container - Hides content behind navbar */
+    .scroll-container {
+        position: fixed;
+        top: 80px; /* Height of navbar + spacer */
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        background: transparent;
+        z-index: 1;
+    }
+    
+    /* Hide scrollbar for cleaner look */
+    .scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: rgba(128, 128, 128, 0.3);
+        border-radius: 3px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(128, 128, 128, 0.5);
+    }
+    
+    /* Content wrapper */
+    .scroll-content {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Ensure content is above stars */
+    .relative.z-10 {
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Admin section divider */
+    .admin-divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: #9CA3AF;
+        font-size: 0.875rem;
+        margin: 2rem 0 1rem;
+    }
+    
+    .admin-divider::before,
+    .admin-divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .admin-divider::before {
+        margin-right: 1rem;
+    }
+    
+    .admin-divider::after {
+        margin-left: 1rem;
+    }
+    
+    .dark .admin-divider::before,
+    .dark .admin-divider::after {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Tiny Stars Background -->
+<div class="stars-container" id="stars"></div>
+
+<!-- Scroll Container - All content goes here -->
+<div class="scroll-container">
+    <div class="scroll-content">
+        <!-- Main Content -->
+        <div class="flex-1 flex items-center justify-center">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+                <!-- Logo with 3D effect -->
+                <div class="hero-text mb-8 transform hover:scale-105 transition-transform duration-500">
+                    <h1 class="text-7xl md:text-8xl font-bold text-gray-900 dark:text-white">
+                        AGORA
+                    </h1>
+                </div>
+                
+                <!-- Tagline -->
+                <p class="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
+                    Secure Digital Voting Platform for Teacher Unions
+                </p>
+                
+                <!-- Voter CTA Buttons -->
+                {% if not user.is_authenticated %}
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                    <a href="{% url 'accounts:login' %}" 
+                       class="px-8 py-4 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-lg font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                        Voter Login
+                    </a>
+                    <a href="{% url 'accounts:register' %}" 
+                       class="px-8 py-4 bg-white text-gray-900 dark:bg-gray-800 dark:text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Voter Registration
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Device Reset Link for Voters -->
+                <div class="mt-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        Lost access to your registered device?
+                        <a href="{% url 'accounts:device_reset' %}" class="text-gray-900 dark:text-white hover:underline ml-1 font-medium">
+                            Request device change
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Admin Divider -->
+                <div class="admin-divider">
+                    
+                </div>
+               <!-- Replace the admin portal button section with this neutral version -->
+<div class="mt-8 pt-8 border-t border-white/30 dark:border-white/20">
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Election Officials</p>
+    <a href="{% url 'accounts:admin_login' %}" 
+       class="inline-flex items-center px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-200 shadow-lg border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-400">
+        <i class="fas fa-user-shield mr-2"></i>
+        Admin Portal
+    </a>
+</div> 
+               
+            </div>
+        </div>
+        
+        <!-- Footer with Links -->
+        <footer class="w-full backdrop-blur-sm bg-transparent border-t border-white/30 dark:border-white/20 py-8">
+            <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <!-- About Section -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">About</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="{% url 'core:about' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    About Us
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:mission' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Our Mission
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:how_it_works' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    How It Works
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:security' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Security
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:faq' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    FAQ
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Policies Section -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Policies</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="{% url 'core:privacy_policy' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Privacy Policy
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:terms_of_service' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Terms of Service
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:cookie_policy' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Cookie Policy
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:data_protection' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Data Protection
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Portals Section -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Portals</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="{% url 'accounts:admin_login' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Admin Portal
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:dashboard' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Voter Portal
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'core:results' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Results Portal
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Quick Links Section -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Quick Links</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="{% url 'landing' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Home
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'accounts:login' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Voter Login
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'accounts:register' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Voter Registration
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'accounts:admin_login' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Admin Login
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'accounts:device_reset' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Device Reset
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'accounts:password_reset_request' %}" class="footer-link text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                    Forgot Password
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Copyright Section -->
+                <div class="mt-8 pt-6 border-t border-white/30 dark:border-white/20">
+                    <p class="text-center text-xs text-gray-500 dark:text-gray-500">
+                        &copy; {% now "Y" %} Agora. All rights reserved. 
+                        <span class="mx-2">|</span>
+                        <a href="{% url 'core:privacy_policy' %}" class="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">Privacy</a>
+                        <span class="mx-2">|</span>
+                        <a href="{% url 'core:terms_of_service' %}" class="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">Terms</a>
+                        <span class="mx-2">|</span>
+                        <a href="{% url 'core:cookie_policy' %}" class="hover:text-gray-900 dark:hover:text-white transition-colors duration-200">Cookies</a>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script>
+// Create tiny floating stars
+function createStars() {
+    const starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
+    
+    // Clear existing stars
+    starsContainer.innerHTML = '';
+    
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        // Random tiny size (1-3px)
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        // Random position
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        // Random animation delay
+        star.style.animationDelay = Math.random() * 5 + 's';
+        
+        // Random animation duration
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+    }
+}
+
+// Initialize stars
+document.addEventListener('DOMContentLoaded', createStars);
+
+// Recreate stars on theme change
+document.addEventListener('themeChanged', function() {
+    console.log('Theme changed, stars updated');
+    createStars();
+});
+
+// Also handle if theme changes via localStorage
+window.addEventListener('storage', function(e) {
+    if (e.key === 'theme') {
+        createStars();
+    }
+});
+</script>
+{% endblock %}

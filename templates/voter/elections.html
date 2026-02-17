@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Elections - Agora{% endblock %}
+
+{% block content %}
+<!-- Fixed navbar spacer - this pushes content below the fixed navbar -->
+<div class="h-24 md:h-28 lg:h-32"></div>
+
+<!-- Main scrollable content container -->
+<div class="fixed inset-0 top-24 md:top-28 lg:top-32 overflow-y-auto" style="z-index: 1;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        
+        <!-- Header with flex-wrap for better mobile responsiveness -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white mb-2">
+                        Elections
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        View all upcoming and past elections
+                    </p>
+                </div>
+                
+                <!-- Optional filter/sort controls can go here -->
+                <div class="flex gap-2">
+                    <select class="px-4 py-2 bg-transparent border border-white/30 dark:border-white/20 rounded-xl text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        <option value="all">All Elections</option>
+                        <option value="active">Active</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Elections Table with overflow-x-auto for responsive scrolling on small screens -->
+        <div class="bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Election</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Positions</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Candidates</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Voters</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for election in elections %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ forloop.counter }}</td>
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ election.name }}</div>
+                                    {% if election.description %}
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ election.description|truncatechars:50 }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                {% if election.election_type == 'NATIONAL' %}
+                                    National
+                                {% else %}
+                                    {{ election.county }}
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                                {% if election.voting_date %}
+                                    {{ election.voting_date|date:"M j, Y" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium
+                                    {% if election.status == 'ACTIVE' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                                    {% elif election.status == 'PENDING' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400
+                                    {% elif election.status == 'COMPLETED' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400
+                                    {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                                    {{ election.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ election.positions.count }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ election.candidates.count }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ election.get_eligible_count }}</td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2">
+                                    <a href="{% url 'core:election_positions' election.id %}" 
+                                       class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition whitespace-nowrap">
+                                        Positions
+                                    </a>
+                                    <a href="{% url 'core:election_results' election.id %}" 
+                                       class="px-3 py-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition whitespace-nowrap">
+                                        Results
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <i class="fas fa-vote-yea fa-3x mb-3 opacity-50"></i>
+                                <p>No elections found.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-8">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Smooth transitions */
+a, button {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for the main content area */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Custom scrollbar for overflow tables */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Table hover effect */
+tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+</style>
+{% endblock %}

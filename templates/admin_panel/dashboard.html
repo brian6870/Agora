@@ -1,0 +1,599 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header Section - Following Landing Page Style -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+            Admin Dashboard
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Manage voters, candidates, and verify KYC documents
+        </p>
+    </div>
+
+    <!-- Statistics Cards Grid - Glass Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Voters Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Voters</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_voters }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-users text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Verified</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ verified_voters }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending KYC Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Pending KYC</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ pending_kyc }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-id-card text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'admin_panel:pending_kyc' %}" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                    Review KYC
+                    <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- TSC Verification Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">TSC Verification</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ pending_tsc }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-school text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'admin_panel:pending_tsc' %}" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                    Verify TSC
+                    <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Candidates Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Candidates</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_candidates }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-user-tie text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Teams</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ total_teams }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Grid - Glass Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- KYC Verification Card -->
+        <div class="glass-card p-8 hover:border-white/50 transition-all duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-id-card text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">KYC Verification</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ pending_kyc }} pending verifications</p>
+                <a href="{% url 'admin_panel:pending_kyc' %}" 
+                   class="inline-block px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                    Verify Documents
+                </a>
+            </div>
+        </div>
+
+        <!-- TSC Verification Card -->
+        <div class="glass-card p-8 hover:border-white/50 transition-all duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-school text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">TSC Verification</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ pending_tsc }} pending verifications</p>
+                <a href="{% url 'admin_panel:pending_tsc' %}" 
+                   class="inline-block px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                    Verify Numbers
+                </a>
+            </div>
+        </div>
+
+        <!-- Applications Management Card -->
+        <div class="glass-card p-8 hover:border-white/50 transition-all duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-file-signature text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Applications</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Manage candidate and team applications</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'admin_panel:candidate_applications' %}" 
+                       class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                        Candidates
+                        {% with pending_apps=request.user.pending_candidate_applications %}
+                            {% if pending_apps %}
+                            <span class="ml-2 px-2 py-0.5 bg-red-500 text-white rounded-full text-xs">{{ pending_apps }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                    <a href="{% url 'admin_panel:team_applications' %}" 
+                       class="px-6 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transform hover:-translate-y-1 transition-all duration-300">
+                        Teams
+                        {% with pending_teams=request.user.pending_team_applications %}
+                            {% if pending_teams %}
+                            <span class="ml-2 px-2 py-0.5 bg-red-500 text-white rounded-full text-xs">{{ pending_teams }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending KYC Table - Glass Card -->
+    {% if pending_kyc_list %}
+    <div class="glass-card p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Pending KYC Verifications</h3>
+            <a href="{% url 'admin_panel:pending_kyc' %}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                View All
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/30 dark:border-white/10">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Name</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">TSC Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">ID Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for voter in pending_kyc_list %}
+                    <tr class="border-b border-white/10 dark:border-white/5 hover:bg-white/5 transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-xs text-gray-600 dark:text-gray-400"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.tsc_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.id_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.kyc_submitted_at|date:"M j, Y" }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'admin_panel:kyc_detail' voter.id %}" 
+                                   class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs hover:bg-gray-800 dark:hover:bg-gray-100 transition-all">
+                                    Review
+                                </a>
+                                <a href="{% url 'admin_panel:voter_detail' voter.id %}" 
+                                   class="px-3 py-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                                    View
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-check-circle text-3xl mb-2 opacity-50"></i>
+                            <p>No pending KYC verifications</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Account Management Section - Two Column Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Suspend Account Form - Glass Card (Following Login Form Style) -->
+        <div class="glass-card p-8">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-ban text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Suspend Account</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Temporarily restrict voter access</p>
+            </div>
+
+            <form method="post" action="{% url 'admin_panel:suspend_voter' 0 %}" class="space-y-6" onsubmit="return suspendAccount(event)">
+                {% csrf_token %}
+                
+                <!-- TSC Number or Email Field - Following Input Style from Login -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        TSC Number or Email
+                    </label>
+                    <input type="text" 
+                           name="user_identifier" 
+                           id="suspend_identifier" 
+                           class="form-input w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all"
+                           placeholder="Enter TSC number or email" 
+                           required>
+                </div>
+
+                <!-- Reason Field - Following Textarea Style -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Reason for Suspension
+                    </label>
+                    <textarea name="reason" 
+                              id="suspend_reason" 
+                              class="form-textarea w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all"
+                              rows="4" 
+                              placeholder="Enter reason for suspension..." 
+                              required></textarea>
+                </div>
+
+                <!-- Submit Button - Following Button Style from Login -->
+                <button type="submit" 
+                        class="w-full px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-base font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                    Suspend Account
+                </button>
+            </form>
+        </div>
+
+        <!-- Delete Account Form - Glass Card (Following Login Form Style) -->
+        <div class="glass-card p-8">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trash-alt text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Delete Account</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Permanently remove voter account</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">This action cannot be undone</p>
+            </div>
+
+            <form method="post" action="{% url 'admin_panel:delete_voter' 0 %}" class="space-y-6" onsubmit="return deleteAccount(event)">
+                {% csrf_token %}
+                
+                <!-- TSC Number or Email Field - Following Input Style from Login -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        TSC Number or Email
+                    </label>
+                    <input type="text" 
+                           name="user_identifier" 
+                           id="delete_identifier" 
+                           class="form-input w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all"
+                           placeholder="Enter TSC number or email" 
+                           required>
+                </div>
+
+                <!-- Reason Field - Following Textarea Style -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Reason for Deletion
+                    </label>
+                    <textarea name="reason" 
+                              id="delete_reason" 
+                              class="form-textarea w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all"
+                              rows="4" 
+                              placeholder="Enter reason for deletion..." 
+                              required></textarea>
+                </div>
+
+                <!-- Submit Button - Following Button Style from Login -->
+                <button type="submit" 
+                        class="w-full px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-base font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                    Delete Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Activity Feed - Glass Card -->
+    <div class="glass-card p-8">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Recent Activity</h3>
+        
+        <div class="space-y-4">
+            {% for activity in recent_activity %}
+            <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <i class="fas {% if activity.type == 'vote' %}fa-vote-yea{% elif activity.type == 'registration' %}fa-user-plus{% elif activity.type == 'candidate_application' %}fa-file-signature{% else %}fa-check{% endif %} text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.description }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ activity.timestamp|timesince }} ago</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <i class="fas fa-history text-4xl text-gray-400 mb-3"></i>
+                <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Function to show toast notifications
+function showNotification(message, type = 'info') {
+    // Create notification container if it doesn't exist
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.className = 'fixed top-24 right-4 z-50 space-y-2 w-80';
+        document.body.appendChild(container);
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    
+    // Set styling based on type
+    let bgColor = 'bg-gray-900';
+    let icon = 'fa-info-circle';
+    
+    if (type === 'success') {
+        bgColor = 'bg-green-600';
+        icon = 'fa-check-circle';
+    } else if (type === 'error') {
+        bgColor = 'bg-red-600';
+        icon = 'fa-exclamation-circle';
+    } else if (type === 'warning') {
+        bgColor = 'bg-yellow-600';
+        icon = 'fa-exclamation-triangle';
+    }
+    
+    notification.className = `${bgColor} text-white p-4 rounded-xl shadow-lg transform transition-all duration-300 translate-x-0 opacity-100 flex items-start gap-3`;
+    notification.innerHTML = `
+        <i class="fas ${icon} mt-0.5"></i>
+        <div class="flex-1">
+            <p class="text-sm font-medium">${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function suspendAccount(event) {
+    event.preventDefault();
+    const identifier = document.getElementById('suspend_identifier').value;
+    const reason = document.getElementById('suspend_reason').value;
+    
+    if (!identifier || !reason) {
+        showNotification('Please fill in all fields', 'warning');
+        return false;
+    }
+    
+    // Find the voter by identifier
+    fetch(`/admin-panel/api/find-voter/?q=${encodeURIComponent(identifier)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.id) {
+                if (confirm(`Are you sure you want to suspend this voter?`)) {
+                    const form = event.target;
+                    const formData = new FormData(form);
+                    
+                    fetch(`/admin-panel/voters/${data.id}/suspend/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showNotification('Voter suspended successfully', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/admin-panel/voters/';
+                            }, 1500);
+                        } else if (data.error) {
+                            showNotification('Error: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Network error. Please try again.', 'error');
+                    });
+                }
+            } else {
+                showNotification('Voter not found', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error finding voter', 'error');
+        });
+    
+    return false;
+}
+
+function deleteAccount(event) {
+    event.preventDefault();
+    const identifier = document.getElementById('delete_identifier').value;
+    const reason = document.getElementById('delete_reason').value;
+    
+    if (!identifier || !reason) {
+        showNotification('Please fill in all fields', 'warning');
+        return false;
+    }
+    
+    // Find the voter by identifier
+    fetch(`/admin-panel/api/find-voter/?q=${encodeURIComponent(identifier)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.id) {
+                // First check if voter has voted
+                fetch(`/admin-panel/api/voter-status/${data.id}/`)
+                    .then(response => response.json())
+                    .then(statusData => {
+                        if (statusData.has_voted) {
+                            showNotification('Cannot delete a voter who has already cast their vote. Consider suspending the account instead.', 'error');
+                            return;
+                        }
+                        
+                        if (!confirm('WARNING: This action is permanent and cannot be undone. Are you absolutely sure?')) {
+                            return;
+                        }
+                        
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        
+                        fetch(`/admin-panel/voters/${data.id}/delete/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                showNotification('Voter account deleted successfully', 'success');
+                                setTimeout(() => {
+                                    window.location.href = '/admin-panel/voters/';
+                                }, 1500);
+                            } else if (data.error) {
+                                showNotification('Error: ' + data.error, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showNotification('Network error. Please try again.', 'error');
+                        });
+                    });
+            } else {
+                showNotification('Voter not found', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error finding voter', 'error');
+        });
+    
+    return false;
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+    /* Toast Notifications */
+#notification-container {
+    pointer-events: none;
+}
+
+#notification-container > div {
+    pointer-events: auto;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+/* Hero Text Effect - From Landing Page */
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+/* Form Elements - Matching Login Forms */
+.form-input, .form-textarea {
+    transition: all 200ms;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    ring: 2px solid rgba(255, 255, 255, 0.25);
+    border-color: transparent;
+}
+
+.form-input::placeholder, .form-textarea::placeholder {
+    color: #9CA3AF;
+}
+
+.dark .form-input::placeholder, .dark .form-textarea::placeholder {
+    color: #6B7280;
+}
+
+/* Glass Card Hover Effect */
+.glass-card {
+    transition: all 300ms;
+}
+
+.glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+</style>
+{% endblock %}

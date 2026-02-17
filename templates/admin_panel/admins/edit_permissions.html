@@ -1,0 +1,189 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Edit Permissions - {{ admin.full_name }} - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Admin Permissions</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Manage permissions for {{ admin.full_name }}</p>
+    </div>
+
+    <div class="glass-card p-8">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Admin Info -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Name</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.full_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Admin ID</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.admin_id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Email</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.email }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Role</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                {% if admin.user_type == 'SUPER_ADMIN' %}Super Admin{% else %}Admin{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Permissions</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">Election Management</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Set election dates, timers, and controls</p>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" name="can_manage_elections" class="sr-only peer" id="perm_elections" {% if admin.can_manage_elections %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">Candidate Management</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Add, edit, and delete candidates and teams</p>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" name="can_manage_candidates" class="sr-only peer" id="perm_candidates" {% if admin.can_manage_candidates %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">KYC Verification</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Verify voter identity documents</p>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" name="can_verify_kyc" class="sr-only peer" id="perm_kyc" {% if admin.can_verify_kyc %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">TSC Verification</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Verify teacher service commission numbers</p>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" name="can_verify_tsc" class="sr-only peer" id="perm_tsc" {% if admin.can_verify_tsc %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">Account Suspension</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Suspend and activate user accounts</p>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" name="can_suspend_accounts" class="sr-only peer" id="perm_suspend" {% if admin.can_suspend_accounts %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">Account Deletion</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Permanently delete user accounts</p>
+                                </div>
+                                <div class="relative">
+                                    <input type="checkbox" name="can_delete_accounts" class="sr-only peer" id="perm_delete" {% if admin.can_delete_accounts %}checked{% endif %}>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Settings -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Additional Settings</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="receive_notifications" class="checkbox" {% if admin.receive_notifications %}checked{% endif %}>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Receive email notifications for pending approvals</span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="two_factor_auth" class="checkbox" {% if admin.two_factor_auth %}checked{% endif %}>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require two-factor authentication</span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="ip_restriction" class="checkbox" {% if admin.ip_restriction %}checked{% endif %}>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Restrict login to specific IP addresses</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Session Settings -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Session Settings</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Session Timeout (minutes)</label>
+                            <input type="number" name="session_timeout" value="{{ admin.session_timeout|default:'30' }}" class="form-input" min="5" max="480">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Concurrent Sessions</label>
+                            <input type="number" name="max_sessions" value="{{ admin.max_sessions|default:'3' }}" class="form-input" min="1" max="10">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-8">
+                <a href="{% url 'admin_panel:admin_detail' admin.id %}" class="px-6 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Save Permissions
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.peer:checked ~ .peer-checked\:bg-gray-900 {
+    background-color: #111827;
+}
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white {
+    background-color: white;
+}
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+}
+</style>
+{% endblock %}

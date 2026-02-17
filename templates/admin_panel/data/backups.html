@@ -1,0 +1,467 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Backup Management - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Backup Management</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">View, download, and manage system backups</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="createBackup()" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-plus-circle mr-2"></i>Create Backup
+            </button>
+            <button onclick="configureBackup()" class="px-6 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-cog mr-2"></i>Configure
+            </button>
+        </div>
+    </div>
+
+    <!-- Backup Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Backups</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_backups }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Size</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_size }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Last Backup</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ last_backup_date|timesince|default:'Never' }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Auto Backup</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ backup_frequency|title }}</p>
+        </div>
+    </div>
+
+    <!-- Storage Overview -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Storage Overview</h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Storage Usage Chart -->
+            <div>
+                <div class="h-64" id="storageChart"></div>
+            </div>
+
+            <!-- Storage Details -->
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">Used Space</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ storage_used }} / {{ storage_total }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ storage_percent }}%"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-center">
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ daily_backup_size }}</p>
+                        <p class="text-xs text-gray-500">Daily Backup Size</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-center">
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ available_space }}</p>
+                        <p class="text-xs text-gray-500">Available Space</p>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Storage Location</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ storage_location }}</p>
+                    <p class="text-xs text-gray-500 mt-1">Path: {{ storage_path }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup List -->
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Available Backups</h2>
+        
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-4 mb-6">
+            <select id="typeFilter" class="form-select w-32">
+                <option value="all">All Types</option>
+                <option value="manual">Manual</option>
+                <option value="auto">Automatic</option>
+            </select>
+            
+            <select id="dateFilter" class="form-select w-32">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+
+            <input type="text" id="searchBackup" class="form-input flex-1" placeholder="Search backups...">
+        </div>
+
+        <!-- Backups Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full" id="backupsTable">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+                            <input type="checkbox" onclick="toggleAll(this)">
+                        </th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Backup ID</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Date/Time</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Type</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Size</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Contents</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Location</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for backup in backups %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4">
+                            <input type="checkbox" class="backup-checkbox checkbox" value="{{ backup.id }}">
+                        </td>
+                        <td class="py-3 px-4 text-sm font-mono text-gray-600 dark:text-gray-400">{{ backup.id }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ backup.created_at|date:"Y-m-d H:i:s" }}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 {% if backup.type == 'manual' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400{% else %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400{% endif %} rounded-full text-xs">
+                                {{ backup.type|title }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ backup.size }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-1">
+                                {% if backup.has_db %}
+                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs" title="Database">DB</span>
+                                {% endif %}
+                                {% if backup.has_media %}
+                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs" title="Media">📁</span>
+                                {% endif %}
+                                {% if backup.has_config %}
+                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs" title="Config">⚙️</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 {% if backup.status == 'completed' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400{% elif backup.status == 'failed' %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400{% else %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400{% endif %} rounded-full text-xs">
+                                {{ backup.status }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ backup.location }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <button onclick="viewBackupDetails('{{ backup.id }}')" class="p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" title="Details">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                                <button onclick="downloadBackup('{{ backup.id }}')" class="p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button onclick="restoreBackup('{{ backup.id }}')" class="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Restore">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button onclick="deleteBackup('{{ backup.id }}')" class="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-database fa-3x mb-3 opacity-50"></i>
+                            <p>No backups found</p>
+                            <button onclick="createBackup()" class="mt-4 px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                                Create Your First Backup
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-3">
+                <span class="text-sm text-gray-600 dark:text-gray-400" id="selectedCount">0 selected</span>
+                <button onclick="downloadSelected()" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Download Selected
+                </button>
+                <button onclick="deleteSelected()" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition">
+                    Delete Selected
+                </button>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Backup Details Modal -->
+<div id="detailsModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-2xl w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Backup Details</h3>
+                <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="backupDetails" class="space-y-4">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Storage Chart
+const storageCtx = document.getElementById('storageChart').getContext('2d');
+new Chart(storageCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Used Space', 'Free Space'],
+        datasets: [{
+            data: [{{ storage_used_gb }}, {{ storage_free_gb }}],
+            backgroundColor: ['#111827', '#E5E7EB'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Filter and search functionality
+document.getElementById('typeFilter').addEventListener('change', filterTable);
+document.getElementById('dateFilter').addEventListener('change', filterTable);
+document.getElementById('searchBackup').addEventListener('input', filterTable);
+
+function filterTable() {
+    const type = document.getElementById('typeFilter').value;
+    const date = document.getElementById('dateFilter').value;
+    const search = document.getElementById('searchBackup').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('#backupsTable tbody tr');
+    
+    rows.forEach(row => {
+        let show = true;
+        
+        // Type filter
+        if (type !== 'all') {
+            const typeCell = row.querySelector('td:nth-child(4) span').textContent.toLowerCase();
+            if (!typeCell.includes(type)) show = false;
+        }
+        
+        // Date filter
+        if (show && date !== 'all') {
+            const dateCell = row.querySelector('td:nth-child(3)').textContent;
+            const backupDate = new Date(dateCell);
+            const now = new Date();
+            
+            if (date === 'today') {
+                if (backupDate.toDateString() !== now.toDateString()) show = false;
+            } else if (date === 'week') {
+                const weekAgo = new Date(now.setDate(now.getDate() - 7));
+                if (backupDate < weekAgo) show = false;
+            } else if (date === 'month') {
+                const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+                if (backupDate < monthAgo) show = false;
+            }
+        }
+        
+        // Search filter
+        if (show && search) {
+            const text = row.textContent.toLowerCase();
+            if (!text.includes(search)) show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+// Checkbox handling
+function toggleAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.backup-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateSelectedCount();
+}
+
+document.querySelectorAll('.backup-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('.backup-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = selected + ' selected';
+}
+
+function getSelectedIds() {
+    const selected = [];
+    document.querySelectorAll('.backup-checkbox:checked').forEach(cb => {
+        selected.push(cb.value);
+    });
+    return selected;
+}
+
+function downloadSelected() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) {
+        alert('No backups selected');
+        return;
+    }
+    window.location.href = `/admin-panel/data/download-backups/?ids=${ids.join(',')}`;
+}
+
+function deleteSelected() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) {
+        alert('No backups selected');
+        return;
+    }
+    
+    if (confirm(`Delete ${ids.length} selected backup(s)?`)) {
+        fetch('/admin-panel/data/delete-backups/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ ids: ids })
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function viewBackupDetails(backupId) {
+    fetch(`/admin-panel/data/backup-details/${backupId}/`)
+        .then(response => response.json())
+        .then(data => {
+            let html = '<div class="space-y-3">';
+            for (const [key, value] of Object.entries(data)) {
+                html += `<div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">${key}</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">${value}</span>
+                </div>`;
+            }
+            html += '</div>';
+            document.getElementById('backupDetails').innerHTML = html;
+            document.getElementById('detailsModal').classList.remove('hidden');
+        });
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').classList.add('hidden');
+}
+
+function downloadBackup(backupId) {
+    window.location.href = `/admin-panel/data/download-backup/${backupId}/`;
+}
+
+function restoreBackup(backupId) {
+    if (confirm('Restore this backup? Current data will be overwritten.')) {
+        fetch(`/admin-panel/data/restore-backup/${backupId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        }).then(response => {
+            if (response.ok) {
+                alert('Backup restored successfully');
+                location.reload();
+            }
+        });
+    }
+}
+
+function deleteBackup(backupId) {
+    if (confirm('Delete this backup?')) {
+        fetch(`/admin-panel/data/delete-backup/${backupId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function createBackup() {
+    window.location.href = '/admin-panel/settings/backup/?action=create';
+}
+
+function configureBackup() {
+    window.location.href = '/admin-panel/settings/backup/';
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('detailsModal')) {
+        closeDetailsModal();
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDetailsModal();
+    }
+});
+</script>
+{% endblock %}

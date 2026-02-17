@@ -1,0 +1,226 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Create Administrator - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create Administrator</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Create a new administrator account</p>
+    </div>
+
+    <div class="glass-card p-8">
+        <form method="post" enctype="multipart/form-data" id="createAdminForm">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Personal Information -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
+                            <input type="text" name="full_name" class="form-input" placeholder="Enter full name" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                            <input type="email" name="email" class="form-input" placeholder="admin@example.com" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Number</label>
+                            <input type="text" name="id_number" class="form-input" placeholder="National ID number" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">County</label>
+                            <select name="county" class="form-select" required>
+                                <option value="">Select County</option>
+                                <option value="Mombasa">Mombasa</option>
+                                <option value="Kwale">Kwale</option>
+                                <option value="Kilifi">Kilifi</option>
+                                <option value="Tana River">Tana River</option>
+                                <option value="Lamu">Lamu</option>
+                                <option value="Taita Taveta">Taita Taveta</option>
+                                <option value="Garissa">Garissa</option>
+                                <option value="Wajir">Wajir</option>
+                                <option value="Mandera">Mandera</option>
+                                <option value="Marsabit">Marsabit</option>
+                                <option value="Isiolo">Isiolo</option>
+                                <option value="Meru">Meru</option>
+                                <option value="Tharaka Nithi">Tharaka Nithi</option>
+                                <option value="Embu">Embu</option>
+                                <option value="Kitui">Kitui</option>
+                                <option value="Machakos">Machakos</option>
+                                <option value="Makueni">Makueni</option>
+                                <option value="Nyandarua">Nyandarua</option>
+                                <option value="Nyeri">Nyeri</option>
+                                <option value="Kirinyaga">Kirinyaga</option>
+                                <option value="Murang'a">Murang'a</option>
+                                <option value="Kiambu">Kiambu</option>
+                                <option value="Turkana">Turkana</option>
+                                <option value="West Pokot">West Pokot</option>
+                                <option value="Samburu">Samburu</option>
+                                <option value="Trans Nzoia">Trans Nzoia</option>
+                                <option value="Uasin Gishu">Uasin Gishu</option>
+                                <option value="Elgeyo Marakwet">Elgeyo Marakwet</option>
+                                <option value="Nandi">Nandi</option>
+                                <option value="Baringo">Baringo</option>
+                                <option value="Laikipia">Laikipia</option>
+                                <option value="Nakuru">Nakuru</option>
+                                <option value="Narok">Narok</option>
+                                <option value="Kajiado">Kajiado</option>
+                                <option value="Kericho">Kericho</option>
+                                <option value="Bomet">Bomet</option>
+                                <option value="Kakamega">Kakamega</option>
+                                <option value="Vihiga">Vihiga</option>
+                                <option value="Bungoma">Bungoma</option>
+                                <option value="Busia">Busia</option>
+                                <option value="Siaya">Siaya</option>
+                                <option value="Kisumu">Kisumu</option>
+                                <option value="Homa Bay">Homa Bay</option>
+                                <option value="Migori">Migori</option>
+                                <option value="Kisii">Kisii</option>
+                                <option value="Nyamira">Nyamira</option>
+                                <option value="Nairobi">Nairobi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
+                            <input type="tel" name="phone_number" class="form-input" placeholder="07XX XXX XXX">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Details -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Admin Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin ID</label>
+                            <input type="text" name="admin_id" class="form-input" placeholder="e.g., ADMIN001" required>
+                            <p class="text-xs text-gray-500 mt-1">Unique identifier for admin login</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Role</label>
+                            <select name="role" class="form-select" required>
+                                <option value="ADMIN">Administrator</option>
+                                <option value="SUPER_ADMIN">Super Administrator</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Security -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account Security</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                            <input type="password" name="password1" id="password1" class="form-input" placeholder="Create password" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
+                            <input type="password" name="password2" id="password2" class="form-input" placeholder="Confirm password" required>
+                        </div>
+                    </div>
+                    <div id="password-mismatch" class="mt-2 text-sm text-red-500 hidden">Passwords do not match</div>
+                </div>
+
+                <!-- Verification Documents -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Verification Documents</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Document (Front)</label>
+                            <input type="file" name="id_front" accept="image/*" class="form-file" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Document (Back)</label>
+                            <input type="file" name="id_back" accept="image/*" class="form-file" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selfie Photo</label>
+                            <input type="file" name="selfie_photo" accept="image/*" class="form-file" required>
+                            <p class="text-xs text-gray-500 mt-1">Clear, front-facing photo</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Permissions -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Admin Permissions</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="can_manage_elections" class="checkbox">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Can manage elections (set dates, timers)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="can_manage_candidates" class="checkbox" checked>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Can manage candidates and teams</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="can_verify_kyc" class="checkbox" checked>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Can verify KYC documents</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="can_verify_tsc" class="checkbox" checked>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Can verify TSC numbers</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="can_suspend_accounts" class="checkbox" checked>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Can suspend accounts</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="can_delete_accounts" class="checkbox">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Can delete accounts</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Terms -->
+                <div>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="terms_agreed" id="terms_agreed" class="checkbox" required>
+                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                            I confirm that this administrator has been properly vetted and approved
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-8">
+                <a href="{% url 'admin_panel:admin_list' %}" class="px-6 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Create Administrator
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('password2').addEventListener('input', function() {
+    const p1 = document.getElementById('password1').value;
+    const p2 = this.value;
+    const mismatch = document.getElementById('password-mismatch');
+    
+    if (p2 && p1 !== p2) {
+        mismatch.classList.remove('hidden');
+    } else {
+        mismatch.classList.add('hidden');
+    }
+});
+
+document.getElementById('createAdminForm').addEventListener('submit', function(e) {
+    const p1 = document.getElementById('password1').value;
+    const p2 = document.getElementById('password2').value;
+    
+    if (p1 !== p2) {
+        e.preventDefault();
+        document.getElementById('password-mismatch').classList.remove('hidden');
+    }
+});
+</script>
+{% endblock %}

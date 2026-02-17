@@ -1,0 +1,210 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Pending TSC Verification - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Pending TSC Verification</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Verify teacher service commission numbers</p>
+        </div>
+        <!-- REMOVED: Useless View Statistics button -->
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ pending_count }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Verified Today</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ verified_today }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Rejected Today</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ rejected_today|default:'0' }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Success Rate</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ success_rate }}%</p>
+        </div>
+    </div>
+
+    <!-- Pending TSC List -->
+    <div class="glass-card p-6">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Voter</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">TSC Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">ID Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">School</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">County</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">KYC Status</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for voter in pending_tsc %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-xs text-gray-500 dark:text-gray-400"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.tsc_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.id_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.school }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.county }}</td>
+                        <td class="py-3 px-4">
+                            {% if voter.kyc_status == 'VERIFIED' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">KYC Verified</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full text-xs">KYC Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <!-- Direct Verify Form - No Modal -->
+                                <form method="post" action="{% url 'admin_panel:verify_tsc' voter.id %}" class="inline" onsubmit="return confirm('Verify TSC for {{ voter.full_name }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs hover:bg-green-200 dark:hover:bg-green-900/40 transition">
+                                        Verify
+                                    </button>
+                                </form>
+                                
+                                <!-- Direct Reject Form - No Modal -->
+                                <form method="post" action="{% url 'admin_panel:reject_tsc' voter.id %}" class="inline" onsubmit="return confirm('Reject TSC for {{ voter.full_name }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs hover:bg-red-200 dark:hover:bg-red-900/40 transition">
+                                        Reject
+                                    </button>
+                                </form>
+                                
+                                <a href="{% url 'admin_panel:voter_detail' voter.id %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                                    View
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-check-circle fa-3x mb-3 opacity-50"></i>
+                            <p>No pending TSC verifications</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add a notification toast for feedback (optional) -->
+<div id="notification-container" class="fixed top-24 right-4 z-50 space-y-2 w-80"></div>
+
+<script>
+// Show notification function (optional - for better UX)
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notification-container');
+    const notification = document.createElement('div');
+    
+    notification.className = `glass-card p-4 border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'} animate-slide-in`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    .animate-slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+`;
+document.head.appendChild(style);
+
+// Optional: Handle form submissions with AJAX for smoother experience
+document.querySelectorAll('.inline form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const action = this.action;
+        const buttonText = this.querySelector('button').textContent.trim();
+        const voterName = this.closest('tr').querySelector('.font-medium').textContent;
+        
+        try {
+            const response = await fetch(action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                showNotification(`${buttonText} successful for ${voterName}`, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showNotification('Network error. Please try again.', 'error');
+        }
+    });
+});
+</script>
+{% endblock %}

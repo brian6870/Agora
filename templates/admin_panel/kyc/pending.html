@@ -1,0 +1,322 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Pending KYC Verification - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Pending KYC Verification</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Review and verify voter identity documents</p>
+        </div>
+        <!-- REMOVED: View Statistics button -->
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ pending_count }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Verified Today</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ verified_today }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Rejected Today</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ rejected_today|default:'0' }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Avg. Processing Time</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ avg_processing_time|default:'0' }}m</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" name="search" value="{{ search }}" class="form-input" placeholder="Search by name, TSC, or ID...">
+            </div>
+            <div class="w-48">
+                <select name="county" class="form-select">
+                    <option value="">All Counties</option>
+                    {% for county in counties %}
+                    <option value="{{ county }}" {% if county == selected_county %}selected{% endif %}>{{ county }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-40">
+                <select name="date_range" class="form-select">
+                    <option value="7" {% if date_range == '7' %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if date_range == '30' %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if date_range == '90' %}selected{% endif %}>Last 90 days</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                Apply Filters
+            </button>
+            <a href="{% url 'admin_panel:pending_kyc' %}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                Clear
+            </a>
+        </form>
+    </div>
+
+    <!-- Pending KYC List -->
+    <div class="glass-card p-6">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Voter</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">TSC Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">ID Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Documents</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for voter in pending_kyc %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-xs text-gray-500 dark:text-gray-400"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.tsc_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.id_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ voter.kyc_submitted_at|timesince }} ago</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-1">
+                                {% if voter.id_front %}
+                                <a href="{{ voter.id_front.url }}" target="_blank" class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="View ID Front">
+                                    <i class="fas fa-id-card"></i> Front
+                                </a>
+                                {% endif %}
+                                {% if voter.id_back %}
+                                <a href="{{ voter.id_back.url }}" target="_blank" class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="View ID Back">
+                                    <i class="fas fa-id-card"></i> Back
+                                </a>
+                                {% endif %}
+                                {% if voter.face_photo %}
+                                <a href="{{ voter.face_photo.url }}" target="_blank" class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="View Face Photo">
+                                    <i class="fas fa-user"></i> Face
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <!-- Review Link -->
+                                <a href="{% url 'admin_panel:kyc_detail' voter.id %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                                    Review
+                                </a>
+                                
+                                <!-- Direct Verify Form -->
+                                <form method="post" action="{% url 'admin_panel:verify_kyc' voter.id %}" class="inline" onsubmit="return confirmVerify('{{ voter.full_name }}')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs hover:bg-green-200 dark:hover:bg-green-900/40 transition">
+                                        Verify
+                                    </button>
+                                </form>
+                                
+                                <!-- Direct Reject Form -->
+                                <form method="post" action="{% url 'admin_panel:reject_kyc' voter.id %}" class="inline reject-form" data-voter-name="{{ voter.full_name }}">
+                                    {% csrf_token %}
+                                    <button type="button" onclick="showRejectReason(this)" class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs hover:bg-red-200 dark:hover:bg-red-900/40 transition">
+                                        Reject
+                                    </button>
+                                    
+                                    <!-- Hidden reject reason field (shown dynamically) -->
+                                    <div class="reject-reason-container hidden mt-2 absolute z-10 bg-white dark:bg-gray-900 p-4 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700" style="min-width: 300px;">
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Rejection</p>
+                                        <select name="reason" class="form-select w-full mb-2" required>
+                                            <option value="">Select a reason</option>
+                                            <option value="Blurry or unclear images">Blurry or unclear images</option>
+                                            <option value="ID document expired">ID document expired</option>
+                                            <option value="Information mismatch">Information mismatch</option>
+                                            <option value="Face photo doesn't match ID">Face photo doesn't match ID</option>
+                                            <option value="Suspected forgery">Suspected forgery</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <textarea name="custom_reason" class="form-textarea w-full text-sm hidden" rows="2" placeholder="Please specify..."></textarea>
+                                        <div class="flex justify-end space-x-2 mt-3">
+                                            <button type="button" onclick="cancelReject(this)" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs hover:bg-gray-300 transition">Cancel</button>
+                                            <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition">Confirm Reject</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-check-circle fa-3x mb-3 opacity-50"></i>
+                            <p>No pending KYC verifications</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_county %}&county={{ selected_county }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_county %}&county={{ selected_county }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Notification Toast Container (for feedback) -->
+<div id="notification-container" class="fixed top-24 right-4 z-50 space-y-2 w-80"></div>
+
+<script>
+// Confirmation for verify action
+function confirmVerify(voterName) {
+    return confirm(`Are you sure you want to verify KYC for ${voterName}?`);
+}
+
+// Show reject reason dropdown
+function showRejectReason(button) {
+    const form = button.closest('.reject-form');
+    const container = form.querySelector('.reject-reason-container');
+    
+    // Hide any other open containers
+    document.querySelectorAll('.reject-reason-container').forEach(c => {
+        if (c !== container) c.classList.add('hidden');
+    });
+    
+    // Toggle this container
+    container.classList.toggle('hidden');
+    
+    // Position the container near the button
+    const rect = button.getBoundingClientRect();
+    container.style.position = 'absolute';
+    container.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+    container.style.left = (rect.left + window.scrollX) + 'px';
+}
+
+// Cancel reject
+function cancelReject(button) {
+    const container = button.closest('.reject-reason-container');
+    container.classList.add('hidden');
+}
+
+// Handle custom reason field
+document.addEventListener('change', function(e) {
+    if (e.target.matches('select[name="reason"]')) {
+        const customField = e.target.closest('.reject-reason-container').querySelector('textarea[name="custom_reason"]');
+        if (e.target.value === 'Other') {
+            customField.classList.remove('hidden');
+            customField.required = true;
+        } else {
+            customField.classList.add('hidden');
+            customField.required = false;
+        }
+    }
+});
+
+// Close reject containers when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.reject-form')) {
+        document.querySelectorAll('.reject-reason-container').forEach(c => {
+            c.classList.add('hidden');
+        });
+    }
+});
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notification-container');
+    const notification = document.createElement('div');
+    
+    notification.className = `glass-card p-4 border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'} animate-slide-in`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Handle form submissions with AJAX (optional - for smoother experience)
+document.querySelectorAll('.reject-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const voterName = this.dataset.voterName;
+        
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                showNotification(`KYC rejected for ${voterName}`, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showNotification('Network error. Please try again.', 'error');
+        }
+    });
+});
+
+// Add animation styles
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    .animate-slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

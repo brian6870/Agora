@@ -1,0 +1,79 @@
+{% if messages %}
+<div class="fixed top-20 right-4 z-50 w-96 space-y-2">
+    {% for message in messages %}
+    <div class="alert message-toast transform transition-all duration-300 translate-x-0 opacity-100 bg-white dark:bg-primary-DEFAULT rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4" 
+         data-message-id="{{ forloop.counter }}">
+        <div class="flex items-start">
+            <div class="flex-shrink-0 mr-3">
+                {% if message.tags == 'success' %}
+                <div class="w-8 h-8 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                </div>
+                {% elif message.tags == 'error' %}
+                <div class="w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400"></i>
+                </div>
+                {% elif message.tags == 'warning' %}
+                <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                </div>
+                {% elif message.tags == 'info' %}
+                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ message }}</p>
+            </div>
+            <button class="flex-shrink-0 ml-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200" 
+                    onclick="dismissMessage(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Progress bar -->
+        <div class="absolute bottom-0 left-0 h-1 bg-gray-200 dark:bg-gray-700 rounded-b-xl overflow-hidden w-full">
+            <div class="message-progress h-full bg-gray-600 dark:bg-gray-400 transition-all duration-[5000ms] linear" style="width: 100%;"></div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+// Auto-dismiss messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('.message-toast');
+    
+    messages.forEach((message, index) => {
+        const progressBar = message.querySelector('.message-progress');
+        
+        // Animate progress bar
+        setTimeout(() => {
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+        }, 100);
+        
+        // Dismiss message after 5 seconds
+        setTimeout(() => {
+            dismissMessage(message);
+        }, 5000 + (index * 500)); // Stagger dismissals
+    });
+});
+
+function dismissMessage(element) {
+    const message = element.closest('.message-toast');
+    if (message) {
+        message.style.transform = 'translateX(100%)';
+        message.style.opacity = '0';
+        setTimeout(() => {
+            message.remove();
+        }, 300);
+    }
+}
+
+// Manual dismiss handler
+window.dismissMessage = dismissMessage;
+</script>
+{% endif %}

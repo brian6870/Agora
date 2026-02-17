@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ election.name }} - Positions - Agora{% endblock %}
+
+{% block content %}
+<!-- Fixed navbar spacer - this pushes content below the fixed navbar -->
+<div class="h-24 md:h-28 lg:h-32"></div>
+
+<!-- Main scrollable content container -->
+<div class="fixed inset-0 top-24 md:top-28 lg:top-32 overflow-y-auto" style="z-index: 1;">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        
+        <!-- Header with flex-wrap for better mobile responsiveness -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white mb-2">
+                        {{ election.name }}
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        {% if election.election_type == 'NATIONAL' %}
+                            National Wide Election
+                        {% else %}
+                            {{ election.county }} County Election
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'core:elections' %}" class="inline-flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Elections
+                </a>
+            </div>
+            
+            <!-- Election Status -->
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+                <span class="px-3 py-1 rounded-full text-xs font-medium
+                    {% if election.status == 'ACTIVE' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                    {% elif election.status == 'PENDING' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400
+                    {% elif election.status == 'COMPLETED' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400
+                    {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                    {{ election.get_status_display }}
+                </span>
+                {% if election.voting_date %}
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-calendar mr-1"></i>{{ election.voting_date|date:"F j, Y" }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Positions Table -->
+        <div class="bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Position</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Max Votes</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Candidates</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for position in positions %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ forloop.counter }}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ position.name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ position.description|default:"—" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ position.max_votes }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ position.candidates.count }}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <a href="{% url 'core:apply_candidate' %}?election={{ election.id }}&position={{ position.id }}" 
+                                   class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                                    Apply
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <i class="fas fa-list-ol fa-3x mb-3 opacity-50"></i>
+                                <p>No positions found for this election.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Candidates per Position -->
+        {% if positions %}
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Candidates by Position</h2>
+            <div class="space-y-6">
+                {% for position in positions %}
+                <div class="bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-2xl p-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">{{ position.name }}</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">#</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Candidate</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Team</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                {% for candidate in position.candidates.all %}
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{{ forloop.counter }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{{ candidate.full_name }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
+                                        {% if candidate.team %}
+                                        <span class="inline-flex items-center">
+                                            <span class="w-2 h-2 rounded-full mr-2" style="background-color: {{ candidate.team.color_code }}"></span>
+                                            {{ candidate.team.name }}
+                                        </span>
+                                        {% else %}
+                                        Independent
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500">No candidates for this position</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Smooth transitions */
+a, button {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for the main content area */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Custom scrollbar for overflow tables */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Table hover effect */
+tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+</style>
+{% endblock %}

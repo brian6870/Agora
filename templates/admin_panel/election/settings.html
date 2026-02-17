@@ -1,0 +1,280 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Election Settings - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 hero-text">
+                Election Settings
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400">
+                Configure the main election parameters
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'admin_panel:election_timer' %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                <i class="fas fa-clock mr-2"></i>Timer Settings
+            </a>
+            <a href="{% url 'admin_panel:election_date' %}" 
+               class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                <i class="fas fa-calendar-alt mr-2"></i>Date Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Settings Form -->
+    <div class="glass-card p-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+            <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                <i class="fas fa-cog text-gray-600 dark:text-gray-400"></i>
+            </span>
+            Election Configuration
+        </h2>
+        
+        <form method="post" class="space-y-6" id="settingsForm">
+            {% csrf_token %}
+            
+            <!-- Election Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Election Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       name="election_name" 
+                       value="{{ election.election_name }}" 
+                       required
+                       placeholder="e.g., 2024 Teacher Union Elections"
+                       class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+            </div>
+
+            <!-- Voting Window -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Voting Date
+                    </label>
+                    <input type="date" 
+                           name="voting_date" 
+                           value="{{ election.voting_date|date:'Y-m-d' }}" 
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Start Time
+                    </label>
+                    <input type="time" 
+                           name="voting_start_time" 
+                           value="{{ election.voting_start_time|time:'H:i' }}" 
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        End Time
+                    </label>
+                    <input type="time" 
+                           name="voting_end_time" 
+                           value="{{ election.voting_end_time|time:'H:i' }}" 
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all">
+                </div>
+            </div>
+
+            <!-- Toggle Switches -->
+            <div class="space-y-4 pt-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Allow Voting</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Enable/disable voting access for voters</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               name="allow_voting" 
+                               class="sr-only peer" 
+                               {% if election.allow_voting %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Publish Results</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Make results visible to voters</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               name="results_published" 
+                               class="sr-only peer" 
+                               {% if election.results_published %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Status Display -->
+            <div class="grid grid-cols-2 gap-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Current Status</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ election.get_status_display }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Votes Cast</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ election.total_votes_cast }}</p>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="pt-4">
+                <button type="submit" 
+                        class="w-full px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-base font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Election Settings
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Emergency Controls Card -->
+    <div class="glass-card p-6 border border-gray-300 dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+            <span class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-2">
+                <i class="fas fa-exclamation-triangle text-xs text-gray-600 dark:text-gray-400"></i>
+            </span>
+            Emergency Controls
+        </h2>
+        
+        <div class="space-y-3">
+            {% csrf_token %}
+            
+            {% if election.allow_voting and not election.emergency_pause %}
+                <button onclick="emergencyAction('pause')" 
+                        class="w-full px-4 py-3 bg-gray-700 text-white dark:bg-gray-600 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-500 transition-all">
+                    <i class="fas fa-pause-circle mr-2"></i>
+                    Pause Voting
+                </button>
+            {% elif election.emergency_pause %}
+                <button onclick="emergencyAction('resume')" 
+                        class="w-full px-4 py-3 bg-gray-700 text-white dark:bg-gray-600 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-500 transition-all">
+                    <i class="fas fa-play-circle mr-2"></i>
+                    Resume Voting
+                </button>
+            {% else %}
+                <button onclick="emergencyAction('start')" 
+                        class="w-full px-4 py-3 bg-gray-700 text-white dark:bg-gray-600 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-500 transition-all">
+                    <i class="fas fa-play-circle mr-2"></i>
+                    Start Voting
+                </button>
+            {% endif %}
+            
+            <button onclick="emergencyAction('stop')" 
+                    class="w-full px-4 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-all">
+                <i class="fas fa-stop-circle mr-2"></i>
+                Stop Election
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notification-container" class="fixed top-24 right-4 z-50 space-y-2 w-80"></div>
+
+<script>
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notification-container');
+    const notification = document.createElement('div');
+    notification.className = `toast-notification bg-gray-900 text-white p-4 rounded-xl shadow-lg border border-white/20 flex items-start gap-3 animate-slideIn`;
+    notification.innerHTML = `
+        <i class="fas fa-info-circle mt-0.5"></i>
+        <div class="flex-1">
+            <p class="text-sm font-medium">${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-white/60 hover:text-white">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(notification);
+    setTimeout(() => notification?.remove(), 5000);
+}
+
+function emergencyAction(action) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let reason = '';
+    
+    if (action === 'pause') {
+        reason = prompt('Please enter reason for pausing:');
+        if (reason === null) return;
+        if (!reason.trim()) {
+            showNotification('Reason is required', 'error');
+            return;
+        }
+    }
+    
+    if (action === 'stop' && !confirm('Are you sure you want to stop the election? This action cannot be undone.')) {
+        return;
+    }
+    
+    const formData = new URLSearchParams();
+    formData.append('action', action);
+    if (reason) formData.append('reason', reason);
+    
+    fetch('{% url "admin_panel:emergency_control" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification(`Election ${action}ed successfully`);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(() => showNotification('Network error. Please try again.'));
+}
+
+document.getElementById('settingsForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Settings saved successfully');
+            setTimeout(() => location.reload(), 1500);
+        }
+    })
+    .catch(() => showNotification('Error saving settings'));
+});
+</script>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+.peer:checked ~ .peer-checked\:bg-gray-900 { background-color: #111827; }
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white { background-color: white; }
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after { transform: translateX(100%); }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+.toast-notification { animation: slideIn 0.3s ease-out; }
+</style>
+{% endblock %}

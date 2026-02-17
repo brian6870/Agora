@@ -1,0 +1,168 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Election Positions - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Election Positions</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Configure positions for {{ election.name }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <!-- FIXED: Changed from election_positions_reorder to reorder_positions -->
+            <a href="{% url 'admin_panel:reorder_positions' %}" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-sort mr-2"></i>Reorder
+            </a>
+            <a href="{% url 'admin_panel:election_position_add' election.id %}" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-plus mr-2"></i>Add Position
+            </a>
+        </div>
+    </div>
+
+    <!-- Position Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Positions</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ positions.count }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Active Positions</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ active_positions }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Candidates</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_candidates }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pending Applications</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ pending_applications }}</p>
+        </div>
+    </div>
+
+    <!-- Positions List -->
+    <div class="glass-card p-6">
+        {% if positions %}
+        <div class="space-y-4">
+            {% for position in positions %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-grip-vertical text-gray-400 cursor-move"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ position.name }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Order: {{ position.order }} | Max Votes: {{ position.max_votes }}</p>
+                        {% if position.description %}
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ position.description|truncatechars:100 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium
+                        {% if position.is_active %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                        {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                        {{ position.is_active|yesno:"Active,Inactive" }}
+                    </span>
+                    <a href="{% url 'admin_panel:election_position_candidates' election.id position.id %}" 
+                       class="p-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                       title="View Candidates">
+                        <i class="fas fa-user-tie"></i>
+                    </a>
+                    <a href="{% url 'admin_panel:election_position_edit' election.id position.id %}" 
+                       class="p-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                       title="Edit Position">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'admin_panel:election_position_delete' election.id position.id %}" 
+                       class="p-2 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40 transition"
+                       title="Delete Position"
+                       onclick="return confirm('Are you sure you want to delete "{{ position.name }}"?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-list-ol fa-4x text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">No Positions Found</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Add positions to configure the ballot for this election.</p>
+            <a href="{% url 'admin_panel:election_position_add' election.id %}" 
+               class="inline-flex items-center px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-plus mr-2"></i>
+                Add Your First Position
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Reorder Instructions -->
+    {% if positions.count > 1 %}
+    <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1 mr-3"></i>
+            <div>
+                <h4 class="text-sm font-medium text-blue-800 dark:text-blue-400">Reorder Positions</h4>
+                <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    Click the "Reorder" button above to drag and drop positions into your desired order. 
+                    The order determines how positions appear on the ballot.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Hero text effect */
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+/* Drag handle cursor */
+.fa-grip-vertical {
+    cursor: move;
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+.fa-grip-vertical:active {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+/* Smooth transitions */
+.glass-card, .p-4, button, a {
+    transition: all 0.2s ease;
+}
+</style>
+
+<script>
+// Reorder functionality would go here if implemented
+// This is a placeholder for future drag-and-drop implementation
+
+function confirmDelete(positionName) {
+    return confirm(`Are you sure you want to delete "${positionName}"? This action cannot be undone.`);
+}
+
+// Optional: Add tooltip functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const actionButtons = document.querySelectorAll('[title]');
+    actionButtons.forEach(button => {
+        button.addEventListener('mouseenter', function(e) {
+            // Tooltip logic could be added here
+        });
+    });
+});
+</script>
+{% endblock %}

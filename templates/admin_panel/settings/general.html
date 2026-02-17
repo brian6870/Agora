@@ -1,0 +1,196 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}General Settings - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 hero-text">General Settings</h1>
+        <p class="text-gray-600 dark:text-gray-400">Configure system-wide settings</p>
+    </div>
+
+    <div class="space-y-6">
+        <!-- System Settings -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">System Settings</h2>
+            
+            <form method="post" action="{% url 'admin_panel:general_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone</label>
+                        <select name="timezone" class="form-select">
+                            <option value="Africa/Nairobi" {% if settings.timezone == 'Africa/Nairobi' %}selected{% endif %}>Africa/Nairobi (EAT)</option>
+                            <option value="UTC" {% if settings.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Format</label>
+                        <select name="date_format" class="form-select">
+                            <option value="Y-m-d" {% if settings.date_format == 'Y-m-d' %}selected{% endif %}>YYYY-MM-DD</option>
+                            <option value="d/m/Y" {% if settings.date_format == 'd/m/Y' %}selected{% endif %}>DD/MM/YYYY</option>
+                            <option value="m/d/Y" {% if settings.date_format == 'm/d/Y' %}selected{% endif %}>MM/DD/YYYY</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Session Timeout (minutes)</label>
+                        <input type="number" name="session_timeout" value="{{ settings.session_timeout|default:'30' }}" class="form-input" min="5" max="480">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Login Attempts</label>
+                        <input type="number" name="max_login_attempts" value="{{ settings.max_login_attempts|default:'5' }}" class="form-input" min="3" max="10">
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Maintenance Mode</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Put the system into maintenance mode</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="maintenance_mode" class="sr-only peer" {% if settings.maintenance_mode %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save System Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Registration Settings -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Registration Settings</h2>
+            
+            <form method="post" action="{% url 'admin_panel:general_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Allow Voter Registration</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Enable/disable new voter registrations</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="allow_registration" class="sr-only peer" {% if settings.allow_registration %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Require Email Verification</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Users must verify email before voting</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="require_email_verification" class="sr-only peer" {% if settings.require_email_verification %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Require KYC Verification</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Users must verify identity before voting</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="require_kyc" class="sr-only peer" {% if settings.require_kyc %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" name="registration_settings" value="1" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Registration Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages from Django -->
+{% if messages %}
+<div class="fixed top-24 right-4 z-50 space-y-2" id="messageContainer">
+    {% for message in messages %}
+    <div class="glass-card p-4 border-l-4 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %} animate-slide-in">
+        <div class="flex items-center">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle text-green-500{% elif message.tags == 'error' %}fa-exclamation-circle text-red-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{{ message }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+.peer:checked ~ .peer-checked\:bg-gray-900 {
+    background-color: #111827;
+}
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white {
+    background-color: white;
+}
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+}
+
+/* Message animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+#messageContainer {
+    pointer-events: none;
+}
+
+#messageContainer > div {
+    pointer-events: auto;
+}
+
+/* Auto-hide messages after 5 seconds */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+</style>
+
+<script>
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('#messageContainer > div');
+    messages.forEach((message, index) => {
+        setTimeout(() => {
+            message.style.animation = 'fadeOut 0.5s ease-out forwards';
+            setTimeout(() => message.remove(), 500);
+        }, 5000 + (index * 200)); // Stagger removal
+    });
+});
+</script>
+{% endblock %}

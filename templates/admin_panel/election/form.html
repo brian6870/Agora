@@ -1,0 +1,390 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}{% if election %}Edit{% else %}Create{% endif %} Election - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+            {% if election %}Edit Election{% else %}Create New Election{% endif %}
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+            {% if election %}Update election details and settings{% else %}Set up a new election for voters{% endif %}
+        </p>
+    </div>
+
+    <div class="glass-card p-8">
+        <form method="post" class="space-y-8" id="electionForm" novalidate>
+            {% csrf_token %}
+            
+            <!-- Display non-field errors -->
+            {% if form.non_field_errors %}
+            <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                {% for error in form.non_field_errors %}
+                <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Basic Information -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-info-circle text-gray-600 dark:text-gray-400"></i>
+                    </span>
+                    Basic Information
+                </h2>
+                
+                <!-- Election Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Election Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           name="name" 
+                           id="id_name"
+                           value="{{ form.name.value|default:'' }}"
+                           required
+                           maxlength="200"
+                           placeholder="e.g., 2024 Teacher Union Elections"
+                           class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all {% if form.name.errors %}border-red-500{% endif %}">
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                    </label>
+                    <textarea name="description" 
+                              id="id_description"
+                              rows="4" 
+                              class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all {% if form.description.errors %}border-red-500{% endif %}"
+                              placeholder="Brief description of the election...">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Election Type -->
+            <div class="space-y-6 pt-6 border-t border-white/30 dark:border-white/10">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-globe text-gray-600 dark:text-gray-400"></i>
+                    </span>
+                    Election Scope
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center">
+                            <input type="radio" 
+                                   name="election_type" 
+                                   id="id_election_type_national"
+                                   value="NATIONAL" 
+                                   class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 focus:ring-gray-500"
+                                   {% if form.election_type.value == 'NATIONAL' or not form.election_type.value %}checked{% endif %}
+                                   onchange="toggleCountyField()">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">National Wide</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" 
+                                   name="election_type" 
+                                   id="id_election_type_county"
+                                   value="COUNTY" 
+                                   class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 focus:ring-gray-500"
+                                   {% if form.election_type.value == 'COUNTY' %}checked{% endif %}
+                                   onchange="toggleCountyField()">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">County Based</span>
+                        </label>
+                    </div>
+                    
+                    <!-- County Selection (shown only for county-based) -->
+                    <div id="countyField" class="{% if form.election_type.value != 'COUNTY' %}hidden{% endif %}">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            County <span class="text-red-500">*</span>
+                        </label>
+                        <select name="county" id="id_county" class="form-select w-full {% if form.county.errors %}border-red-500{% endif %}">
+                            <option value="">-- Select County --</option>
+                            {% for county in counties %}
+                            <option value="{{ county }}" {% if form.county.value == county %}selected{% endif %}>{{ county }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.county.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.county.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Only voters from this county will be eligible to vote.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voting Schedule -->
+            <div class="space-y-6 pt-6 border-t border-white/30 dark:border-white/10">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-calendar-alt text-gray-600 dark:text-gray-400"></i>
+                    </span>
+                    Voting Schedule
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Voting Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Voting Date
+                        </label>
+                        <input type="date" 
+                               name="voting_date" 
+                               id="id_voting_date"
+                               value="{{ form.voting_date.value|date:'Y-m-d'|default:'' }}"
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all {% if form.voting_date.errors %}border-red-500{% endif %}">
+                        {% if form.voting_date.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.voting_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Start Time -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Start Time
+                        </label>
+                        <input type="time" 
+                               name="voting_start_time" 
+                               id="id_voting_start_time"
+                               value="{{ form.voting_start_time.value|time:'H:i'|default:'08:00' }}"
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all {% if form.voting_start_time.errors %}border-red-500{% endif %}">
+                        {% if form.voting_start_time.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.voting_start_time.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- End Time -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            End Time
+                        </label>
+                        <input type="time" 
+                               name="voting_end_time" 
+                               id="id_voting_end_time"
+                               value="{{ form.voting_end_time.value|time:'H:i'|default:'17:00' }}"
+                               class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all {% if form.voting_end_time.errors %}border-red-500{% endif %}">
+                        {% if form.voting_end_time.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.voting_end_time.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Timezone (read-only) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Time Zone
+                        </label>
+                        <input type="text" 
+                               value="East Africa Time (EAT)" 
+                               readonly
+                               class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automatic Controls -->
+            <div class="space-y-6 pt-6 border-t border-white/30 dark:border-white/10">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-gray-600 dark:text-gray-400"></i>
+                    </span>
+                    Automatic Controls
+                </h2>
+                
+                <div class="space-y-4">
+                    <!-- Auto-open -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Auto-open voting</p>
+                            <p class="text-xs text-gray-500">When enabled, election will automatically become ACTIVE at start time</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   name="auto_open" 
+                                   id="id_auto_open"
+                                   class="sr-only peer" 
+                                   {% if form.auto_open.value %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Auto-close -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Auto-close voting</p>
+                            <p class="text-xs text-gray-500">When enabled, election will automatically become COMPLETED at end time</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   name="auto_close" 
+                                   id="id_auto_close"
+                                   class="sr-only peer" 
+                                   {% if form.auto_close.value %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Auto-publish -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Auto-publish results</p>
+                            <p class="text-xs text-gray-500">When enabled, results will be published automatically when election completes</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" 
+                                   name="auto_publish" 
+                                   id="id_auto_publish"
+                                   class="sr-only peer" 
+                                   {% if form.auto_publish.value %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reminder Settings -->
+            <div class="space-y-6 pt-6 border-t border-white/30 dark:border-white/10">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-bell text-gray-600 dark:text-gray-400"></i>
+                    </span>
+                    Email Reminders
+                </h2>
+                
+                <div class="space-y-3">
+                    <label class="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <input type="checkbox" name="reminder_24h" id="id_reminder_24h" class="checkbox" {% if form.reminder_24h.value %}checked{% endif %}>
+                        <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">Send reminder 24 hours before voting</span>
+                    </label>
+                    
+                    <label class="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <input type="checkbox" name="reminder_1h" id="id_reminder_1h" class="checkbox" {% if form.reminder_1h.value %}checked{% endif %}>
+                        <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">Send reminder 1 hour before voting</span>
+                    </label>
+                    
+                    <label class="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <input type="checkbox" name="reminder_start" id="id_reminder_start" class="checkbox" {% if form.reminder_start.value %}checked{% endif %}>
+                        <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">Send notification when voting opens</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="space-y-6 pt-6 border-t border-white/30 dark:border-white/10">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-toggle-on text-gray-600 dark:text-gray-400"></i>
+                    </span>
+                    Election Status
+                </h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Status
+                    </label>
+                    <select name="status" id="id_status" class="form-select w-full md:w-64 {% if form.status.errors %}border-red-500{% endif %}">
+                        <option value="DRAFT" {% if form.status.value == 'DRAFT' or not form.status.value %}selected{% endif %}>Draft</option>
+                        <option value="PENDING" {% if form.status.value == 'PENDING' %}selected{% endif %}>Pending</option>
+                        <option value="ACTIVE" {% if form.status.value == 'ACTIVE' %}selected{% endif %}>Active</option>
+                        <option value="COMPLETED" {% if form.status.value == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                        <option value="ARCHIVED" {% if form.status.value == 'ARCHIVED' %}selected{% endif %}>Archived</option>
+                    </select>
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Allow Voting Toggle -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Allow Voting</p>
+                        <p class="text-xs text-gray-500">When disabled, users cannot vote even if election is active</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               name="allow_voting" 
+                               id="id_allow_voting"
+                               class="sr-only peer" 
+                               {% if form.allow_voting.value %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end space-x-3 pt-8">
+                <a href="{% url 'admin_panel:election_list' %}" 
+                   class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                    {% if election %}Update{% else %}Create{% endif %} Election
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+.peer:checked ~ .peer-checked\:bg-gray-900 {
+    background-color: #111827;
+}
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white {
+    background-color: white;
+}
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+}
+</style>
+
+<script>
+function toggleCountyField() {
+    const nationalRadio = document.getElementById('id_election_type_national');
+    const countyRadio = document.getElementById('id_election_type_county');
+    const countyField = document.getElementById('countyField');
+    const countySelect = document.getElementById('id_county');
+    
+    if (nationalRadio && nationalRadio.checked) {
+        countyField.classList.add('hidden');
+        if (countySelect) countySelect.required = false;
+    } else if (countyRadio && countyRadio.checked) {
+        countyField.classList.remove('hidden');
+        if (countySelect) countySelect.required = true;
+    }
+}
+
+// Form validation
+document.getElementById('electionForm').addEventListener('submit', function(e) {
+    const startTime = document.getElementById('id_voting_start_time').value;
+    const endTime = document.getElementById('id_voting_end_time').value;
+    
+    if (startTime && endTime && endTime <= startTime) {
+        e.preventDefault();
+        alert('End time must be after start time');
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleCountyField();
+});
+</script>
+{% endblock %}

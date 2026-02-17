@@ -1,0 +1,619 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Live Election Monitoring - Agora{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Live indicator - using neutral grays only */
+    .live-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background-color: #9CA3AF; /* gray-400 */
+        border-radius: 50%;
+        animation: live-pulse 1.5s infinite;
+    }
+    
+    .dark .live-indicator {
+        background-color: #6B7280; /* gray-500 */
+    }
+    
+    @keyframes live-pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    /* Vote pulse animation - subtle */
+    .vote-pulse {
+        animation: subtle-pulse 2s infinite;
+    }
+    
+    @keyframes subtle-pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.9; }
+        100% { opacity: 1; }
+    }
+    
+    /* Custom scrollbar for activity feed */
+    .activity-feed {
+        max-height: 24rem;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #9CA3AF #F3F4F6;
+    }
+    
+    .dark .activity-feed {
+        scrollbar-color: #4B5563 #1F2937;
+    }
+    
+    .activity-feed::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .activity-feed::-webkit-scrollbar-track {
+        background: #F3F4F6;
+        border-radius: 3px;
+    }
+    
+    .dark .activity-feed::-webkit-scrollbar-track {
+        background: #1F2937;
+    }
+    
+    .activity-feed::-webkit-scrollbar-thumb {
+        background: #9CA3AF;
+        border-radius: 3px;
+    }
+    
+    .dark .activity-feed::-webkit-scrollbar-thumb {
+        background: #4B5563;
+    }
+    
+    .activity-feed::-webkit-scrollbar-thumb:hover {
+        background: #6B7280;
+    }
+    
+    .dark .activity-feed::-webkit-scrollbar-thumb:hover {
+        background: #6B7280;
+    }
+    
+    /* Chart container */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    /* Stat cards hover effect */
+    .stat-card {
+        transition: all 300ms;
+    }
+    
+    .stat-card:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Progress bar styling */
+    .progress-bar {
+        transition: width 0.5s ease;
+    }
+    
+    /* Table styles */
+    .monitoring-table th {
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.7rem;
+        color: #6B7280;
+    }
+    
+    .dark .monitoring-table th {
+        color: #9CA3AF;
+    }
+    
+    .monitoring-table td {
+        font-size: 0.875rem;
+    }
+    
+    .monitoring-table tr {
+        border-bottom: 1px solid rgba(107, 114, 128, 0.1);
+        transition: background-color 0.2s;
+    }
+    
+    .monitoring-table tr:hover {
+        background-color: rgba(107, 114, 128, 0.05);
+    }
+    
+    .dark .monitoring-table tr:hover {
+        background-color: rgba(156, 163, 175, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header with Live Indicator -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <div class="flex items-center space-x-3 mb-2">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white hero-text">
+                    Live Election Monitoring
+                </h1>
+                <div class="flex items-center space-x-2">
+                    <span class="live-indicator"></span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400 font-medium tracking-wider">LIVE</span>
+                </div>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400">Real-time election statistics and monitoring</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="exportData()" 
+                    class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300 hover:-translate-y-1">
+                <i class="fas fa-download mr-2"></i>Export Data
+            </button>
+            <button onclick="refreshData()" 
+                    class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-300 hover:-translate-y-1">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Real-time Stats Cards - Following UI Spec -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Votes Cast Card -->
+        <div class="glass-card p-6 stat-card vote-pulse">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Votes Cast</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white" id="totalVotes">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-vote-yea text-gray-600 dark:text-gray-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Last minute: <span id="lastMinuteVotes" class="font-medium text-gray-900 dark:text-white">+0</span></span>
+                    <span class="text-gray-500 dark:text-gray-400">Rate: <span id="voteRate" class="font-medium text-gray-900 dark:text-white">0</span>/min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voter Turnout Card -->
+        <div class="glass-card p-6 stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Voter Turnout</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white" id="voterTurnout">0%</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-users text-gray-600 dark:text-gray-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gray-900 dark:bg-white h-2 rounded-full progress-bar" id="turnoutBar" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>Registered: <span id="registeredVoters" class="font-medium text-gray-900 dark:text-white">0</span></span>
+                    <span>Voted: <span id="votedCount" class="font-medium text-gray-900 dark:text-white">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Polling Stations Card -->
+        <div class="glass-card p-6 stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Polling Stations</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white" id="activeStations">1</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-school text-gray-600 dark:text-gray-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Total Stations: <span id="totalStations" class="font-medium text-gray-900 dark:text-white">1</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Remaining Card -->
+        <div class="glass-card p-6 stat-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Time Remaining</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white font-mono tracking-wider" id="timeRemaining">--:--:--</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-clock text-gray-600 dark:text-gray-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                    Election ends: <span id="endTime" class="font-medium text-gray-900 dark:text-white">{{ election.voting_end_time|time:"g:i A" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Vote Chart -->
+    <div class="glass-card p-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Live Vote Count by Position</h2>
+            <div class="flex space-x-2">
+                <select id="timeRange" class="px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500">
+                    <option value="1">Last hour</option>
+                    <option value="6">Last 6 hours</option>
+                    <option value="24" selected>Last 24 hours</option>
+                    <option value="all">All time</option>
+                </select>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="voteChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Live Results by Position -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% for position in positions %}
+        <div class="glass-card p-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ position.name }}</h3>
+            
+            <div class="space-y-6">
+                {% for candidate in position.candidates %}
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ candidate.full_name }}</span>
+                            {% if candidate.team %}
+                            <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs">
+                                {{ candidate.team.name }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <span class="text-sm font-bold text-gray-900 dark:text-white candidate-votes" data-candidate="{{ candidate.id }}">{{ candidate.vote_count }}</span>
+                    </div>
+                    <div class="relative">
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div class="bg-gray-900 dark:bg-white h-2 rounded-full progress-bar candidate-bar" 
+                                 data-candidate="{{ candidate.id }}" 
+                                 style="width: {{ candidate.percentage }}%"></div>
+                        </div>
+                        <span class="absolute right-0 top-3 text-xs text-gray-500 dark:text-gray-400">{{ candidate.percentage }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Total Votes for Position</span>
+                    <span class="font-bold text-gray-900 dark:text-white position-total" data-position="{{ position.id }}">{{ position.total_votes }}</span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="lg:col-span-2 glass-card p-12 text-center">
+            <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Data Available</h3>
+            <p class="text-gray-500 dark:text-gray-400">Vote results will appear here once voting begins.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Live Activity Feed -->
+    <div class="glass-card p-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Live Activity Feed</h2>
+        
+        <div class="activity-feed space-y-4 pr-2" id="activityFeed">
+            {% for activity in recent_activity %}
+            <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-vote-yea text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.voter.full_name }} cast a vote</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ activity.timestamp|timesince }} ago</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-12">
+                <i class="fas fa-clock text-4xl text-gray-400 mb-3"></i>
+                <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Regional Breakdown -->
+    <div class="glass-card p-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Regional Breakdown</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full monitoring-table">
+                <thead>
+                    <tr class="border-b border-white/30 dark:border-white/10">
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">County</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Registered</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Voted</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Turnout</th>
+                        <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400">Leading Candidate</th>
+                    </tr>
+                </thead>
+                <tbody id="regionalData">
+                    {% for region in regional_stats %}
+                    <tr>
+                        <td class="py-3 px-4 text-sm text-gray-900 dark:text-white">{{ region.county }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ region.registered }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ region.voted }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ region.turnout }}%</span>
+                                <div class="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div class="bg-gray-900 dark:bg-white h-1.5 rounded-full" style="width: {{ region.turnout }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ region.leading_candidate|default:'—' }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-map-marked-alt text-3xl mb-2 opacity-50"></i>
+                            <p>No regional data available</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let voteChart;
+let updateInterval;
+
+// Initialize chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('voteChart').getContext('2d');
+    
+    // Create gradient for chart fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(17, 24, 39, 0.2)');
+    gradient.addColorStop(1, 'rgba(17, 24, 39, 0)');
+    
+    voteChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Votes per minute',
+                data: [],
+                borderColor: '#111827',
+                backgroundColor: gradient,
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#111827',
+                pointBorderColor: '#111827',
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: '#111827',
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#ffffff',
+                    titleColor: '#111827',
+                    bodyColor: '#4B5563',
+                    borderColor: '#E5E7EB',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    boxPadding: 4
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6B7280'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6B7280'
+                    }
+                }
+            }
+        }
+    });
+    
+    startLiveUpdates();
+});
+
+function startLiveUpdates() {
+    // Update every 10 seconds
+    updateInterval = setInterval(fetchLiveData, 10000);
+    fetchLiveData();
+}
+
+function fetchLiveData() {
+    fetch('{% url "admin_panel:live_monitoring_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            updateStats(data);
+            updateChart(data);
+            updateActivityFeed(data.recent_activity);
+        })
+        .catch(error => console.error('Error fetching live data:', error));
+}
+
+function updateStats(data) {
+    document.getElementById('totalVotes').textContent = data.total_votes || 0;
+    document.getElementById('lastMinuteVotes').textContent = `+${data.last_minute_votes || 0}`;
+    document.getElementById('voteRate').textContent = data.vote_rate || 0;
+    document.getElementById('voterTurnout').textContent = (data.turnout || 0) + '%';
+    document.getElementById('turnoutBar').style.width = (data.turnout || 0) + '%';
+    document.getElementById('registeredVoters').textContent = data.registered_voters || 0;
+    document.getElementById('votedCount').textContent = data.voted_count || 0;
+    document.getElementById('activeStations').textContent = data.active_stations || 1;
+    document.getElementById('totalStations').textContent = data.total_stations || 1;
+    
+    // Update candidate votes
+    if (data.candidates) {
+        data.candidates.forEach(candidate => {
+            const voteEl = document.querySelector(`.candidate-votes[data-candidate="${candidate.id}"]`);
+            const barEl = document.querySelector(`.candidate-bar[data-candidate="${candidate.id}"]`);
+            if (voteEl) voteEl.textContent = candidate.votes || 0;
+            if (barEl) barEl.style.width = (candidate.percentage || 0) + '%';
+        });
+    }
+    
+    // Update position totals
+    if (data.positions) {
+        data.positions.forEach(position => {
+            const totalEl = document.querySelector(`.position-total[data-position="${position.id}"]`);
+            if (totalEl) totalEl.textContent = position.total_votes || 0;
+        });
+    }
+}
+
+function updateChart(data) {
+    const now = new Date();
+    const labels = [];
+    const values = [];
+    
+    for (let i = 5; i >= 0; i--) {
+        const time = new Date(now - i * 60000);
+        labels.push(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        values.push((data.vote_history && data.vote_history[i]) || 0);
+    }
+    
+    voteChart.data.labels = labels;
+    voteChart.data.datasets[0].data = values;
+    voteChart.update();
+}
+
+function updateActivityFeed(activities) {
+    const feed = document.getElementById('activityFeed');
+    if (!activities || activities.length === 0) {
+        feed.innerHTML = `
+            <div class="text-center py-12">
+                <i class="fas fa-clock text-4xl text-gray-400 mb-3"></i>
+                <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const html = activities.map(activity => `
+        <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-vote-yea text-gray-600 dark:text-gray-400"></i>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">${activity.voter || 'A voter'} cast a vote</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${activity.time || 'just now'} ago</p>
+            </div>
+        </div>
+    `).join('');
+    
+    feed.innerHTML = html;
+}
+
+function refreshData() {
+    fetchLiveData();
+}
+
+function exportData() {
+    window.location.href = '{% url "admin_panel:export_live_data" %}';
+}
+
+// Countdown timer
+function updateTimer() {
+    const now = new Date();
+    const endTimeStr = document.getElementById('endTime').textContent;
+    if (!endTimeStr || endTimeStr === 'Not set') {
+        document.getElementById('timeRemaining').textContent = '--:--:--';
+        return;
+    }
+    
+    const timeMatch = endTimeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!timeMatch) {
+        document.getElementById('timeRemaining').textContent = '--:--:--';
+        return;
+    }
+    
+    let hours = parseInt(timeMatch[1]);
+    const minutes = parseInt(timeMatch[2]);
+    const isPM = timeMatch[3].toUpperCase() === 'PM';
+    
+    if (isPM && hours !== 12) hours += 12;
+    if (!isPM && hours === 12) hours = 0;
+    
+    const endDate = new Date();
+    endDate.setHours(hours, minutes, 0, 0);
+    
+    // If end time is earlier than now, assume it's tomorrow
+    if (endDate < now) {
+        endDate.setDate(endDate.getDate() + 1);
+    }
+    
+    const diff = endDate - now;
+    
+    if (diff > 0) {
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        
+        document.getElementById('timeRemaining').textContent = 
+            `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+    } else {
+        document.getElementById('timeRemaining').textContent = '00:00:00';
+    }
+}
+
+// Start timer updates
+setInterval(updateTimer, 1000);
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+});
+
+// Hero text effect
+document.querySelectorAll('.hero-text').forEach(el => {
+    el.addEventListener('mouseenter', function() {
+        this.style.transform = 'perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05)';
+    });
+    el.addEventListener('mouseleave', function() {
+        this.style.transform = 'perspective(1000px) rotateX(0deg) scale(1)';
+    });
+});
+</script>
+{% endblock %}

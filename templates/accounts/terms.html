@@ -1,0 +1,88 @@
+<!-- templates/accounts/terms.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Terms of Service - Agora{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 32px 0;">
+    <h1 style="margin-bottom: 8px;">Terms of Service</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 32px;">Last updated: January 1, 2024</p>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">1. Acceptance of Terms</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            By accessing and using the Agora voting platform, you agree to be bound by these Terms of Service. 
+            If you do not agree to these terms, please do not use the platform.
+        </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">2. Eligibility</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            You must be a registered teacher in Kenya with a valid TSC number to use this platform. 
+            You must be at least 18 years of age. Administrator accounts require additional verification.
+        </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">3. Account Registration</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            You agree to provide accurate, current, and complete information during registration. 
+            You are responsible for maintaining the confidentiality of your account credentials. 
+            Your account is bound to your registered device; device changes require administrative approval.
+        </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">4. KYC Verification</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            You consent to the collection and verification of your identification documents. 
+            This information is used solely for identity verification and election integrity purposes.
+        </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">5. Voting</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            Each eligible voter may cast one vote per election. Votes are final and cannot be changed once submitted. 
+            The platform records vote timestamps and device information for audit purposes.
+        </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">6. Privacy</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            Your personal information is handled according to our Privacy Policy. 
+            We do not share your data with third parties except as required by law.
+        </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">7. Prohibited Conduct</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            You may not:
+        </p>
+        <ul style="color: var(--text-secondary); margin-left: 20px; line-height: 1.6;">
+            <li>Attempt to manipulate or interfere with the voting process</li>
+            <li>Share your account credentials with others</li>
+            <li>Use automated tools or scripts to access the platform</li>
+            <li>Attempt to bypass security measures or device binding</li>
+        </ul>
+    </div>
+    
+    <div class="card" style="margin-bottom: 32px;">
+        <h3 style="margin-bottom: 16px;">8. Termination</h3>
+        <p style="color: var(--text-secondary); line-height: 1.6;">
+            We reserve the right to suspend or terminate accounts that violate these terms or compromise election integrity.
+        </p>
+    </div>
+    
+    <div style="text-align: center;">
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">By using the platform, you acknowledge that you have read and understand these terms.</p>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+            I Agree and Continue
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!-- templates/includes/header.html -->
+<header class="header">
+    <div style="height: 100%; padding: 0 24px; display: flex; align-items: center; justify-content: space-between;">
+        <!-- Mobile Menu Toggle -->
+        <button class="menu-toggle" onclick="toggleSidebar()" style="display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+            ☰
+        </button>
+        
+        <!-- Search -->
+        <div style="flex: 1; max-width: 400px;">
+            <input type="search" placeholder="Search..." style="background: var(--bg-primary); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; width: 100%;">
+        </div>
+        
+        <!-- Right Actions -->
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <!-- Notifications -->
+            <button style="background: none; border: none; color: var(--text-secondary); cursor: pointer; position: relative;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"/>
+                    <path d="M9 17V18C9 18.7956 9.31607 19.5587 9.87868 20.1213C10.4413 20.6839 11.2044 21 12 21C12.7956 21 13.5587 20.6839 14.1213 20.1213C14.6839 19.5587 15 18.7956 15 18V17"/>
+                </svg>
+            </button>
+            
+            <!-- Profile -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-primary); display: flex; align-items: center; justify-content: center;">
+                    <span style="color: var(--text-primary); font-weight: 500;">
+                        {{ user.full_name|first|upper }}
+                    </span>
+                </div>
+                <span style="color: var(--text-primary); font-weight: 500; font-size: 0.9rem;">
+                    {{ user.full_name|truncatechars:20 }}
+                </span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<style>
+    @media (max-width: 768px) {
+        .menu-toggle {
+            display: block !important;
+        }
+        
+        .header > div {
+            padding: 0 16px !important;
+        }
+        
+        .header input {
+            max-width: 200px;
+        }
+    }
+</style>

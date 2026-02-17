@@ -1,0 +1,234 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Elections Management - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 hero-text">Elections</h1>
+            <p class="text-gray-600 dark:text-gray-400">Create and manage multiple elections</p>
+        </div>
+        <a href="{% url 'admin_panel:election_create' %}" 
+           class="inline-flex items-center px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+            <i class="fas fa-plus mr-2"></i>
+            Create New Election
+        </a>
+    </div>
+
+    <!-- Election Type Tabs -->
+    <div class="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-800 pb-4">
+        <a href="?filter=all" 
+           class="type-filter px-6 py-2 rounded-full text-sm font-medium transition-all {% if filter == 'all' or not filter %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            All Elections
+        </a>
+        <a href="?filter=active" 
+           class="type-filter px-6 py-2 rounded-full text-sm font-medium transition-all {% if filter == 'active' %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Active
+        </a>
+        <a href="?filter=pending" 
+           class="type-filter px-6 py-2 rounded-full text-sm font-medium transition-all {% if filter == 'pending' %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Pending
+        </a>
+        <a href="?filter=completed" 
+           class="type-filter px-6 py-2 rounded-full text-sm font-medium transition-all {% if filter == 'completed' %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Completed
+        </a>
+        <a href="?filter=draft" 
+           class="type-filter px-6 py-2 rounded-full text-sm font-medium transition-all {% if filter == 'draft' %}bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Draft
+        </a>
+    </div>
+
+    <!-- Elections Table -->
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/30 dark:border-white/10 bg-gray-50/50 dark:bg-gray-800/50">
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">#</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Election</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Type</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Date & Time</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Stats</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for election in elections %}
+                    <tr class="border-b border-white/10 dark:border-white/5 hover:bg-white/5 transition-colors">
+                        <td class="py-4 px-6 text-sm text-gray-600 dark:text-gray-400">{{ forloop.counter }}</td>
+                        <td class="py-4 px-6">
+                            <div>
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ election.name }}</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ election.description|truncatechars:50 }}</p>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            {% if election.election_type == 'NATIONAL' %}
+                                <span class="text-sm text-gray-700 dark:text-gray-300">
+                                    <i class="fas fa-globe mr-1 text-gray-500"></i>National
+                                </span>
+                            {% else %}
+                                <span class="text-sm text-gray-700 dark:text-gray-300">
+                                    <i class="fas fa-map-marker-alt mr-1 text-gray-500"></i>{{ election.county }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="space-y-1">
+                                <div class="text-sm text-gray-700 dark:text-gray-300">
+                                    <i class="fas fa-calendar-alt w-4 text-gray-500 mr-1"></i>
+                                    {{ election.voting_date|date:"M j, Y"|default:"Not set" }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-clock w-4 mr-1"></i>
+                                    {{ election.voting_start_time|time:"g:i A" }} - {{ election.voting_end_time|time:"g:i A" }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="text-center">
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ election.positions.count }}</p>
+                                    <p class="text-xs text-gray-500">Pos</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ election.candidates.count }}</p>
+                                    <p class="text-xs text-gray-500">Can</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm font-bold text-gray-900 dark:text-white">{{ election.total_votes_cast }}</p>
+                                    <p class="text-xs text-gray-500">Votes</p>
+                                </div>
+                            </div>
+                            {% if election.total_votes_cast > 0 and election.get_eligible_count > 0 %}
+                            <div class="mt-2">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Turnout</span>
+                                    <span>{% widthratio election.total_votes_cast election.get_eligible_count 100 %}%</span>
+                                </div>
+                                <div class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gray-900 dark:bg-white rounded-full" 
+                                         style="width: {% widthratio election.total_votes_cast election.get_eligible_count 100 %}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap
+                                {% if election.status == 'ACTIVE' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                                {% elif election.status == 'PENDING' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400
+                                {% elif election.status == 'COMPLETED' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400
+                                {% elif election.status == 'DRAFT' %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400
+                                {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                                {{ election.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{% url 'admin_panel:election_edit' election.id %}" 
+                                   class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition group"
+                                   title="Edit">
+                                    <i class="fas fa-edit text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:election_positions' election.id %}" 
+                                   class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition group"
+                                   title="Manage Positions">
+                                    <i class="fas fa-list-ol text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:election_results' election.id %}" 
+                                   class="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/40 transition group"
+                                   title="View Results">
+                                    <i class="fas fa-chart-bar text-blue-600 dark:text-blue-400"></i>
+                                </a>
+                                {% if election.status == 'DRAFT' or election.status == 'PENDING' %}
+                                <a href="{% url 'admin_panel:election_delete' election.id %}" 
+                                   class="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40 transition group"
+                                   title="Delete">
+                                    <i class="fas fa-trash text-red-600 dark:text-red-400"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-16 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-vote-yea fa-4x mb-4 opacity-50"></i>
+                            <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">No Elections Found</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-6">Get started by creating your first election.</p>
+                            <a href="{% url 'admin_panel:election_create' %}" 
+                               class="inline-flex items-center px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create Election
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center py-4 border-t border-white/30 dark:border-white/10">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if filter %}&filter={{ filter }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if filter %}&filter={{ filter }}{% endif %}" 
+                   class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+.type-filter {
+    transition: all 200ms;
+}
+.type-filter:hover {
+    transform: translateY(-1px);
+}
+
+/* Table hover effects */
+tbody tr:hover td {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.dark tbody tr:hover td {
+    background-color: rgba(255,255,255,0.02);
+}
+
+/* Action button tooltips */
+[title] {
+    position: relative;
+    cursor: help;
+}
+</style>
+{% endblock %}

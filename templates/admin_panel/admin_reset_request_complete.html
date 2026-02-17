@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Request Submitted - Admin - Agora{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Background */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    .light .star {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .dark .star {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    /* Scroll Container */
+    .scroll-container {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        background: transparent;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .scroll-inner {
+        width: 100%;
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        background: transparent;
+    }
+    
+    .scroll-content {
+        width: 100%;
+        padding: 2rem 0;
+        min-height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Glass Card */
+    .glass-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1.5rem;
+        transition: all 300ms;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .dark .glass-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Icon Container */
+    .icon-container {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 9999px;
+        background: rgba(239, 68, 68, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .dark .icon-container {
+        background: rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background-color: #111827;
+        color: white;
+        border-radius: 9999px;
+        font-size: 1rem;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 300ms;
+        border: 2px solid transparent;
+    }
+    
+    .dark .btn-primary {
+        background-color: white;
+        color: #111827;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #D1D5DB;
+    }
+    
+    /* Admin Badge */
+    .admin-badge {
+        display: inline-block;
+        padding: 0.25rem 1rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 9999px;
+        color: #EF4444;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+    
+    .dark .admin-badge {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #F87171;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Star Background -->
+<div class="stars-container" id="stars"></div>
+
+<!-- Scroll Container -->
+<div class="scroll-container">
+    <div class="scroll-inner">
+        <div class="scroll-content">
+            <div class="w-full max-w-lg mx-auto">
+                <div class="glass-card">
+                    <span class="admin-badge">Administrator</span>
+                    
+                    <div class="icon-container">
+                        <i class="fas fa-check-circle text-3xl text-green-500"></i>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                        Request Submitted
+                    </h2>
+                    
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">
+                        Your admin device reset request has been received and is pending review.
+                    </p>
+                    
+                    <div class="p-4 bg-yellow-500/10 rounded-xl mb-6 text-left">
+                        <p class="text-sm text-yellow-700 dark:text-yellow-400">
+                            <i class="fas fa-clock mr-2"></i>
+                            Admin requests are prioritized and typically processed within 2-4 hours. You'll receive an email once approved.
+                        </p>
+                    </div>
+                    
+                    <a href="{% url 'accounts:admin_login' %}" class="btn-primary">
+                        Return to Admin Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Create stars
+function createStars() {
+    const starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
+    
+    starsContainer.innerHTML = '';
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', createStars);
+document.addEventListener('themeChanged', createStars);
+</script>
+{% endblock %}

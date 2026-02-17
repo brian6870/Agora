@@ -1,0 +1,58 @@
+{% extends 'core/base_page.html' %}
+
+{% block page_content %}
+<div class="space-y-8">
+    <div class="text-center mb-12">
+        <span class="inline-block px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-sm text-sm text-gray-700 dark:text-gray-300 mb-4">
+        </span>
+    </div>
+    
+    <div class="prose prose-lg max-w-none text-gray-700 dark:text-gray-300">
+        <p class="lead">
+            Agora uses cookies to enhance your experience and maintain security. This policy explains how we use cookies.
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">What Are Cookies?</h3>
+        <p>
+            Cookies are small text files stored on your device that help websites remember your preferences and authenticate your sessions.
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">How We Use Cookies</h3>
+        
+        <div class="space-y-4">
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Essential Cookies</h4>
+                <p class="text-sm">Required for platform operation. Used for session management, security, and maintaining your login state.</p>
+            </div>
+            
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Preference Cookies</h4>
+                <p class="text-sm">Remember your theme preference (dark/light mode) and other settings.</p>
+            </div>
+            
+            <div class="p-4 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-xl">
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Security Cookies</h4>
+                <p class="text-sm">Help prevent fraud by supporting device fingerprinting and rate limiting.</p>
+            </div>
+        </div>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Cookie Duration</h3>
+        <ul class="custom-list">
+            <li><strong>Session cookies:</strong> Expire when you close your browser</li>
+            <li><strong>Persistent cookies:</strong> Remain for up to 30 days or until cleared</li>
+            <li><strong>Device fingerprint:</strong> Stored securely for account binding</li>
+        </ul>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Managing Cookies</h3>
+        <p>
+            You can control cookies through your browser settings. However, disabling essential cookies may affect platform functionality, especially device binding and login persistence.
+        </p>
+        
+        <div class="mt-8 p-6 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-2xl">
+            <p class="text-sm">
+                By continuing to use Agora, you consent to our use of cookies as described in this policy.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

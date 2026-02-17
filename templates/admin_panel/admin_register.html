@@ -1,0 +1,1479 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Registration - Agora{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Background */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    .light .star {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .dark .star {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    /* Scroll Container */
+    .scroll-container {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        background: transparent;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .scroll-inner {
+        width: 100%;
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        background: transparent;
+    }
+    
+    .scroll-content {
+        width: 100%;
+        padding: 2rem 0;
+        min-height: calc(100vh - 80px);
+    }
+    
+    .scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: rgba(128, 128, 128, 0.3);
+        border-radius: 3px;
+    }
+    
+    /* Glass Card */
+    .glass-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1.5rem;
+        transition: all 300ms;
+    }
+    
+    .dark .glass-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Form Elements */
+    .form-input, .form-select, .form-textarea, .form-file {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 0.75rem;
+        transition: all 200ms;
+        color: #111827;
+    }
+    
+    .dark .form-input, .dark .form-select, .dark .form-textarea, .dark .form-file {
+        background-color: #1A1B1E;
+        border-color: #374151;
+        color: #FFFFFF;
+    }
+    
+    .form-input:focus, .form-select:focus, .form-textarea:focus, .form-file:focus {
+        outline: none;
+        ring: 2px solid rgba(255, 255, 255, 0.25);
+        border-color: transparent;
+    }
+    
+    .form-input.error, .form-select.error {
+        border-color: #EF4444;
+    }
+    
+    .form-input::placeholder, .form-textarea::placeholder {
+        color: #9CA3AF;
+    }
+    
+    .dark .form-input::placeholder, .dark .form-textarea::placeholder {
+        color: #6B7280;
+    }
+    
+    .form-file::file-selector-button {
+        padding: 0.5rem 1rem;
+        margin-right: 1rem;
+        background-color: #F3F4F6;
+        border: none;
+        border-radius: 0.5rem;
+        color: #4B5563;
+        cursor: pointer;
+        transition: all 200ms;
+    }
+    
+    .form-file::file-selector-button:hover {
+        background-color: #E5E7EB;
+    }
+    
+    .dark .form-file::file-selector-button {
+        background-color: #1A1B1E;
+        color: #9CA3AF;
+    }
+    
+    .dark .form-file::file-selector-button:hover {
+        background-color: #2D2D2D;
+    }
+    
+    /* Progress Steps */
+    .step-indicator {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        transition: all 200ms;
+        border: 2px solid;
+    }
+    
+    .step-active {
+        background-color: #FFFFFF;
+        border-color: #FFFFFF;
+        color: #111827;
+    }
+    
+    .dark .step-active {
+        background-color: #FFFFFF;
+        border-color: #FFFFFF;
+        color: #111827;
+    }
+    
+    .step-completed {
+        background-color: #4B5563;
+        border-color: #4B5563;
+        color: #FFFFFF;
+    }
+    
+    .step-pending {
+        background-color: transparent;
+        border-color: #9CA3AF;
+        color: #9CA3AF;
+    }
+    
+    .step-line {
+        flex: 1;
+        height: 2px;
+        background-color: #9CA3AF;
+    }
+    
+    .step-line.completed {
+        background-color: #4B5563;
+    }
+    
+    /* Admin Badge */
+    .admin-badge {
+        display: inline-block;
+        padding: 0.25rem 1rem;
+        background: rgba(107, 114, 128, 0.1);
+        border: 1px solid rgba(107, 114, 128, 0.3);
+        border-radius: 9999px;
+        color: #6B7280;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+    }
+    
+    .dark .admin-badge {
+        background: rgba(156, 163, 175, 0.1);
+        border-color: rgba(156, 163, 175, 0.3);
+        color: #9CA3AF;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        background-color: #111827;
+        color: white;
+        border-radius: 9999px;
+        font-size: 1rem;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 300ms;
+        border: 2px solid transparent;
+        cursor: pointer;
+    }
+    
+    .dark .btn-primary {
+        background-color: white;
+        color: #111827;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #D1D5DB;
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+        padding: 0.75rem 1.5rem;
+        background-color: transparent;
+        color: #4B5563;
+        border: 2px solid #D1D5DB;
+        border-radius: 9999px;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 300ms;
+        cursor: pointer;
+    }
+    
+    .dark .btn-secondary {
+        color: #9CA3AF;
+        border-color: #4B5563;
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+        background-color: #F3F4F6;
+        transform: translateY(-2px);
+    }
+    
+    .dark .btn-secondary:hover:not(:disabled) {
+        background-color: #374151;
+        color: white;
+    }
+    
+    .btn-secondary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Password Strength */
+    .strength-bar {
+        height: 0.25rem;
+        border-radius: 9999px;
+        transition: all 300ms;
+    }
+    
+    .strength-weak {
+        background-color: #9CA3AF;
+    }
+    
+    .strength-medium {
+        background-color: #6B7280;
+    }
+    
+    .strength-strong {
+        background-color: #374151;
+    }
+    
+    /* Checkbox */
+    .checkbox {
+        width: 1rem;
+        height: 1rem;
+        background-color: #F3F4F6;
+        border: 1px solid #D1D5DB;
+        border-radius: 0.25rem;
+        accent-color: #111827;
+        cursor: pointer;
+    }
+    
+    .dark .checkbox {
+        background-color: #1A1B1E;
+        border-color: #4B5563;
+        accent-color: white;
+    }
+    
+    /* Password mismatch alert */
+    .password-mismatch {
+        background-color: rgba(107, 114, 128, 0.1);
+        border-left: 4px solid #6B7280;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .dark .password-mismatch {
+        background-color: rgba(156, 163, 175, 0.1);
+    }
+    
+    /* OTP Section */
+    .otp-input {
+        letter-spacing: 0.5rem;
+        font-size: 2rem;
+        text-align: center;
+        font-family: monospace;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .otp-remaining {
+        font-size: 0.875rem;
+        color: #6B7280;
+    }
+    
+    .dark .otp-remaining {
+        color: #9CA3AF;
+    }
+    
+    /* Spam message */
+    .spam-message {
+        background-color: rgba(107, 114, 128, 0.1);
+        border: 1px solid #D1D5DB;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: #4B5563;
+    }
+    
+    .dark .spam-message {
+        background-color: rgba(55, 65, 81, 0.3);
+        border-color: #4B5563;
+        color: #D1D5DB;
+    }
+    
+    /* KYC Instructions */
+    .kyc-instruction {
+        border-left: 4px solid #6B7280;
+        background-color: rgba(107, 114, 128, 0.1);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .dark .kyc-instruction {
+        background-color: rgba(55, 65, 81, 0.3);
+    }
+    
+    .instruction-good {
+        border-left: 4px solid #374151;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background-color: rgba(55, 65, 81, 0.05);
+    }
+    
+    .instruction-bad {
+        border-left: 4px solid #6B7280;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background-color: rgba(107, 114, 128, 0.05);
+    }
+    
+    .dark .instruction-good {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .dark .instruction-bad {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Image Preview */
+    .image-preview {
+        max-width: 200px;
+        max-height: 150px;
+        object-fit: contain;
+        border-radius: 0.5rem;
+        border: 2px solid #E5E7EB;
+        margin-top: 0.5rem;
+    }
+    
+    .dark .image-preview {
+        border-color: #374151;
+    }
+    
+    /* Links */
+    .text-link {
+        color: #111827;
+        text-decoration: underline;
+        cursor: pointer;
+        transition: opacity 200ms;
+    }
+    
+    .dark .text-link {
+        color: white;
+    }
+    
+    .text-link:hover {
+        opacity: 0.8;
+    }
+    
+    /* Error container */
+    .error-container {
+        background-color: rgba(239, 68, 68, 0.1);
+        border-left: 4px solid #EF4444;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .dark .error-container {
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .field-error {
+        color: #EF4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid #374151;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    
+    .dark .loading-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid #9CA3AF;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Star Background -->
+<div class="stars-container" id="stars"></div>
+
+<!-- Terms and Privacy Modals -->
+{% include 'includes/terms_modal.html' %}
+
+<!-- Scroll Container -->
+<div class="scroll-container">
+    <div class="scroll-inner">
+        <div class="scroll-content">
+            <div class="w-full max-w-3xl mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <span class="admin-badge">Administrator Registration</span>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+                        Register as Admin
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Create an administrator account to manage elections
+                    </p>
+                </div>
+                
+                <!-- Global Error Display -->
+                <div id="global-error" class="error-container hidden">
+                    <p id="global-error-message" class="text-red-600 dark:text-red-400 font-medium"></p>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+                    <div class="bg-white dark:bg-gray-900 rounded-2xl p-8 max-w-sm text-center">
+                        <div class="loading-spinner mb-4"></div>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Processing</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Please wait while we complete your registration...</p>
+                    </div>
+                </div>
+                
+                <!-- Registration Card -->
+                <div class="glass-card p-6 md:p-8">
+                    <!-- Progress Steps -->
+                    <div class="flex items-center justify-between mb-8" id="progress-steps">
+                        <div class="flex items-center">
+                            <div class="step-indicator step-active" id="step1-indicator">1</div>
+                            <span class="ml-2 text-sm font-medium text-gray-900 dark:text-white">Personal</span>
+                        </div>
+                        <div class="step-line" id="step1-line"></div>
+                        
+                        <div class="flex items-center">
+                            <div class="step-indicator step-pending" id="step2-indicator">2</div>
+                            <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Email</span>
+                        </div>
+                        <div class="step-line" id="step2-line"></div>
+                        
+                        <div class="flex items-center">
+                            <div class="step-indicator step-pending" id="step3-indicator">3</div>
+                            <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Verification</span>
+                        </div>
+                        <div class="step-line" id="step3-line"></div>
+                        
+                        <div class="flex items-center">
+                            <div class="step-indicator step-pending" id="step4-indicator">4</div>
+                            <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Security</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden field to track terms agreement -->
+                    <input type="hidden" id="terms_agreed_value" name="terms_agreed" value="false">
+                    
+                    <!-- Step 1: Personal Information -->
+                    <div id="step1" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Full Name <span class="text-gray-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="full_name"
+                                   name="full_name"
+                                   class="form-input"
+                                   placeholder="Enter your full name"
+                                   required>
+                            <div id="name_error" class="field-error hidden"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Email Address <span class="text-gray-500">*</span>
+                            </label>
+                            <input type="email" 
+                                   id="email"
+                                   name="email"
+                                   class="form-input"
+                                   placeholder="admin@example.com"
+                                   required>
+                            <div id="email_error" class="field-error hidden"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    ID Number <span class="text-gray-500">*</span>
+                                </label>
+                                <input type="text" 
+                                       id="id_number"
+                                       name="id_number"
+                                       class="form-input"
+                                       placeholder="National ID Number"
+                                       required>
+                                <div id="id_error" class="field-error hidden"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    County <span class="text-gray-500">*</span>
+                                </label>
+                                <select id="county" name="county" class="form-select" required>
+                                    <option value="">-- Select County --</option>
+                                    <option value="Mombasa">Mombasa</option>
+                                    <option value="Kwale">Kwale</option>
+                                    <option value="Kilifi">Kilifi</option>
+                                    <option value="Tana River">Tana River</option>
+                                    <option value="Lamu">Lamu</option>
+                                    <option value="Taita Taveta">Taita Taveta</option>
+                                    <option value="Garissa">Garissa</option>
+                                    <option value="Wajir">Wajir</option>
+                                    <option value="Mandera">Mandera</option>
+                                    <option value="Marsabit">Marsabit</option>
+                                    <option value="Isiolo">Isiolo</option>
+                                    <option value="Meru">Meru</option>
+                                    <option value="Tharaka Nithi">Tharaka Nithi</option>
+                                    <option value="Embu">Embu</option>
+                                    <option value="Kitui">Kitui</option>
+                                    <option value="Machakos">Machakos</option>
+                                    <option value="Makueni">Makueni</option>
+                                    <option value="Nyandarua">Nyandarua</option>
+                                    <option value="Nyeri">Nyeri</option>
+                                    <option value="Kirinyaga">Kirinyaga</option>
+                                    <option value="Murang'a">Murang'a</option>
+                                    <option value="Kiambu">Kiambu</option>
+                                    <option value="Turkana">Turkana</option>
+                                    <option value="West Pokot">West Pokot</option>
+                                    <option value="Samburu">Samburu</option>
+                                    <option value="Trans Nzoia">Trans Nzoia</option>
+                                    <option value="Uasin Gishu">Uasin Gishu</option>
+                                    <option value="Elgeyo Marakwet">Elgeyo Marakwet</option>
+                                    <option value="Nandi">Nandi</option>
+                                    <option value="Baringo">Baringo</option>
+                                    <option value="Laikipia">Laikipia</option>
+                                    <option value="Nakuru">Nakuru</option>
+                                    <option value="Narok">Narok</option>
+                                    <option value="Kajiado">Kajiado</option>
+                                    <option value="Kericho">Kericho</option>
+                                    <option value="Bomet">Bomet</option>
+                                    <option value="Kakamega">Kakamega</option>
+                                    <option value="Vihiga">Vihiga</option>
+                                    <option value="Bungoma">Bungoma</option>
+                                    <option value="Busia">Busia</option>
+                                    <option value="Siaya">Siaya</option>
+                                    <option value="Kisumu">Kisumu</option>
+                                    <option value="Homa Bay">Homa Bay</option>
+                                    <option value="Migori">Migori</option>
+                                    <option value="Kisii">Kisii</option>
+                                    <option value="Nyamira">Nyamira</option>
+                                    <option value="Nairobi">Nairobi</option>
+                                </select>
+                                <div id="county_error" class="field-error hidden"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Phone Number <span class="text-gray-400 text-sm">(Optional)</span>
+                            </label>
+                            <input type="tel" 
+                                   id="phone_number"
+                                   name="phone_number"
+                                   class="form-input"
+                                   placeholder="07XX XXX XXX">
+                            <div id="phone_error" class="field-error hidden"></div>
+                        </div>
+                        
+                        <div class="flex justify-end mt-8">
+                            <button type="button" onclick="validateStep1()" class="btn-primary px-8">
+                                Continue to Email Verification
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Email Verification -->
+                    <div id="step2" style="display: none;" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Verify Your Email</h3>
+                        
+                        <div class="text-center mb-6">
+                            <p class="text-gray-600 dark:text-gray-400 mb-2">
+                                We've sent a 6-digit verification code to:
+                            </p>
+                            <p class="text-lg font-medium text-gray-900 dark:text-white" id="display-email"></p>
+                            <p class="otp-remaining mt-2" id="otp-remaining"></p>
+                        </div>
+                        
+                        <div class="spam-message">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span>Didn't receive the code? Please check your spam/junk folder. Add <strong>noreply@agora.ke</strong> to your contacts.</span>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-center">
+                                Enter Verification Code <span class="text-gray-500">*</span>
+                            </label>
+                            <div class="flex justify-center">
+                                <input type="text" 
+                                       id="otp"
+                                       maxlength="6"
+                                       class="form-input otp-input"
+                                       placeholder="123456"
+                                       required>
+                            </div>
+                            <div id="otp_error" class="field-error text-center hidden"></div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="button" onclick="resendOTP()" class="text-link text-sm" id="resend-otp-btn">
+                                Didn't receive code? Resend
+                            </button>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="goToStep(1)" class="btn-secondary px-8">
+                                Back
+                            </button>
+                            <button type="button" onclick="verifyOTP()" class="btn-primary px-8">
+                                Verify Email
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Identity Verification -->
+                    <div id="step3" style="display: none;" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Identity Verification (KYC)</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                ID Document Type <span class="text-gray-500">*</span>
+                            </label>
+                            <select id="document_type" class="form-select max-w-xs">
+                                <option value="national_id">National ID Card</option>
+                                <option value="passport">Passport</option>
+                                <option value="drivers_license">Driver's License</option>
+                            </select>
+                        </div>
+                        
+                        <div class="kyc-instruction">
+                            <h4 class="font-medium text-gray-900 dark:text-white mb-2">📸 Photo Guidelines</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div class="instruction-good">
+                                    <p class="font-medium text-gray-900 dark:text-white mb-1">✓ Good Photos</p>
+                                    <ul class="list-disc pl-4 text-gray-600 dark:text-gray-400">
+                                        <li>Well-lit, clear image</li>
+                                        <li>All four corners visible</li>
+                                        <li>Text clearly readable</li>
+                                        <li>No glare or reflections</li>
+                                    </ul>
+                                </div>
+                                <div class="instruction-bad">
+                                    <p class="font-medium text-gray-900 dark:text-white mb-1">✗ Rejected Photos</p>
+                                    <ul class="list-disc pl-4 text-gray-600 dark:text-gray-400">
+                                        <li>Blurry or pixelated</li>
+                                        <li>Missing corners/cropped</li>
+                                        <li>Glare covering text</li>
+                                        <li>Flash reflections</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Front of ID Document <span class="text-gray-500">*</span>
+                            </label>
+                            <input type="file" 
+                                   id="id_front"
+                                   name="id_front"
+                                   accept="image/*"
+                                   class="form-file"
+                                   required>
+                            <div id="id_front_preview" class="mt-2 hidden">
+                                <img src="" alt="ID Front Preview" class="image-preview">
+                            </div>
+                            <div id="id_front_error" class="field-error mt-1 hidden"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Back of ID Document <span class="text-gray-500">*</span>
+                            </label>
+                            <input type="file" 
+                                   id="id_back"
+                                   name="id_back"
+                                   accept="image/*"
+                                   class="form-file"
+                                   required>
+                            <div id="id_back_preview" class="mt-2 hidden">
+                                <img src="" alt="ID Back Preview" class="image-preview">
+                            </div>
+                            <div id="id_back_error" class="field-error mt-1 hidden"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Live Selfie / Passport Photo <span class="text-gray-500">*</span>
+                            </label>
+                            <input type="file" 
+                                   id="selfie_photo"
+                                   name="selfie_photo"
+                                   accept="image/*"
+                                   class="form-file"
+                                   required>
+                            <div id="selfie_preview" class="mt-2 hidden">
+                                <img src="" alt="Selfie Preview" class="image-preview">
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Take a fresh selfie - photos of photos will be rejected
+                            </p>
+                            <div id="selfie_error" class="field-error mt-1 hidden"></div>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <label class="flex items-start">
+                                <input type="checkbox" id="liveness_confirmed" class="checkbox mt-1">
+                                <span class="ml-3 text-sm text-gray-600 dark:text-gray-400">
+                                    <strong class="text-gray-900 dark:text-white">I confirm that the face photo is a live selfie taken just now</strong> - I understand that photos of photos, edited images, or previously taken photos will be rejected.
+                                </span>
+                            </label>
+                            <div id="liveness_error" class="field-error mt-1 hidden"></div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="goToStep(2)" class="btn-secondary px-8">
+                                Back
+                            </button>
+                            <button type="button" onclick="validateStep3()" class="btn-primary px-8">
+                                Continue to Security
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Security -->
+                    <div id="step4" style="display: none;" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Security Settings</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Password <span class="text-gray-500">*</span>
+                                </label>
+                                <input type="password" 
+                                       id="password1"
+                                       class="form-input"
+                                       placeholder="Create a strong password"
+                                       required>
+                                <div id="password1_error" class="field-error hidden"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Confirm Password <span class="text-gray-500">*</span>
+                                </label>
+                                <input type="password" 
+                                       id="password2"
+                                       class="form-input"
+                                       placeholder="Re-enter password"
+                                       required>
+                                <div id="password2_error" class="field-error hidden"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="password-mismatch" class="password-mismatch hidden">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                Passwords do not match. Please check and try again.
+                            </p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Password strength</span>
+                                <span class="text-sm text-gray-400 dark:text-gray-500" id="strengthText">Not entered</span>
+                            </div>
+                            <div class="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div class="strength-bar" id="passwordStrength" style="width: 0%;"></div>
+                            </div>
+                            <ul class="text-xs text-gray-500 dark:text-gray-400 space-y-1 mt-2">
+                                <li id="rule-length">○ At least 8 characters</li>
+                                <li id="rule-lowercase">○ At least one lowercase letter</li>
+                                <li id="rule-uppercase">○ At least one uppercase letter</li>
+                                <li id="rule-number">○ At least one number</li>
+                                <li id="rule-special">○ At least one special character (!@#$%^&*)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="terms_agreed" class="checkbox" onchange="updateTermsValue()">
+                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                    I agree to the 
+                                    <span onclick="openTermsModal()" class="text-link">Terms and Conditions</span>
+                                    and 
+                                    <span onclick="openPrivacyModal()" class="text-link">Privacy Policy</span>
+                                    for administrators
+                                    <span class="text-gray-500">*</span>
+                                </span>
+                            </label>
+                            <div id="terms_error" class="field-error hidden"></div>
+                            
+                            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    <i class="fas fa-info-circle mr-2 text-gray-500 dark:text-gray-400"></i>
+                                    Your registration will be reviewed by super administrators. You'll receive an email once approved.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="goToStep(3)" class="btn-secondary px-8">
+                                Back
+                            </button>
+                            <button type="button" onclick="submitRegistration()" class="btn-primary px-8">
+                                Complete Registration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Store registration data
+let registrationData = {
+    full_name: '',
+    email: '',
+    id_number: '',
+    county: '',
+    phone_number: '',
+    password: '',
+    terms_agreed: false
+};
+
+// Step management
+let currentStep = 1;
+
+function showLoading() {
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    document.getElementById('loading-overlay').classList.add('flex');
+}
+
+function hideLoading() {
+    document.getElementById('loading-overlay').classList.add('hidden');
+    document.getElementById('loading-overlay').classList.remove('flex');
+}
+
+function showGlobalError(message) {
+    const errorDiv = document.getElementById('global-error');
+    const errorMsg = document.getElementById('global-error-message');
+    errorMsg.textContent = message;
+    errorDiv.classList.remove('hidden');
+    setTimeout(() => {
+        errorDiv.classList.add('hidden');
+    }, 10000);
+}
+
+function clearFieldErrors() {
+    document.querySelectorAll('.field-error').forEach(el => {
+        el.classList.add('hidden');
+        el.textContent = '';
+    });
+    document.querySelectorAll('.form-input, .form-select').forEach(el => {
+        el.classList.remove('error');
+    });
+}
+
+function showFieldError(fieldId, message) {
+    const errorEl = document.getElementById(fieldId);
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+        const input = document.querySelector(`#${fieldId.replace('_error', '')}`);
+        if (input) {
+            input.classList.add('error');
+        }
+    }
+}
+
+function goToStep(step) {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'none';
+    document.getElementById('step4').style.display = 'none';
+    
+    document.getElementById(`step${step}`).style.display = 'block';
+    currentStep = step;
+    
+    updateProgressSteps(step);
+    clearFieldErrors();
+}
+
+function updateProgressSteps(activeStep) {
+    const steps = [1, 2, 3, 4];
+    
+    steps.forEach(step => {
+        const indicator = document.getElementById(`step${step}-indicator`);
+        const line = document.getElementById(`step${step}-line`);
+        
+        if (step < activeStep) {
+            indicator.className = 'step-indicator step-completed';
+            indicator.innerHTML = '<i class="fas fa-check text-sm"></i>';
+            if (line) line.className = 'step-line completed';
+        } else if (step === activeStep) {
+            indicator.className = 'step-indicator step-active';
+            indicator.innerHTML = step;
+            if (line) line.className = 'step-line';
+        } else {
+            indicator.className = 'step-indicator step-pending';
+            indicator.innerHTML = step;
+            if (line) line.className = 'step-line';
+        }
+    });
+}
+
+function updateTermsValue() {
+    registrationData.terms_agreed = document.getElementById('terms_agreed').checked;
+}
+
+// Step 1 Validation
+async function validateStep1() {
+    clearFieldErrors();
+    
+    const fullName = document.getElementById('full_name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const idNumber = document.getElementById('id_number').value.trim();
+    const county = document.getElementById('county').value;
+    const phone = document.getElementById('phone_number').value.trim();
+    
+    let hasError = false;
+    
+    if (!fullName) {
+        showFieldError('name_error', 'Full name is required');
+        hasError = true;
+    }
+    
+    if (!email) {
+        showFieldError('email_error', 'Email is required');
+        hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('email_error', 'Invalid email format');
+        hasError = true;
+    }
+    
+    if (!idNumber) {
+        showFieldError('id_error', 'ID number is required');
+        hasError = true;
+    } else if (!/^\d+$/.test(idNumber)) {
+        showFieldError('id_error', 'ID number must contain only digits');
+        hasError = true;
+    }
+    
+    if (!county) {
+        showFieldError('county_error', 'County is required');
+        hasError = true;
+    }
+    
+    if (phone && !/^07\d{8}$/.test(phone)) {
+        showFieldError('phone_error', 'Phone number must be in format 07XXXXXXXX');
+        hasError = true;
+    }
+    
+    if (hasError) return;
+    
+    showLoading();
+    
+    try {
+        // Check availability
+        const [emailCheck] = await Promise.all([
+            fetch(`/accounts/check-email/?email=${encodeURIComponent(email)}`)
+        ]);
+        
+        const emailData = await emailCheck.json();
+        
+        if (emailData.is_taken) {
+            showFieldError('email_error', 'This email is already registered');
+            hideLoading();
+            return;
+        }
+        
+        registrationData = {
+            full_name: fullName,
+            email: email,
+            id_number: idNumber,
+            county: county,
+            phone_number: phone
+        };
+        
+        await getOTPStatus(email);
+        await sendOTP(email);
+        
+        document.getElementById('display-email').textContent = email;
+        hideLoading();
+        goToStep(2);
+        
+    } catch (error) {
+        hideLoading();
+        console.error('Validation error:', error);
+        showGlobalError('An error occurred. Please try again.');
+    }
+}
+
+// OTP Functions
+async function getOTPStatus(email) {
+    try {
+        const response = await fetch(`/accounts/get-otp-status/?email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+        const remainingEl = document.getElementById('otp-remaining');
+        if (remainingEl) {
+            remainingEl.textContent = `You have ${data.remaining} of ${data.limit} OTP requests remaining today.`;
+        }
+    } catch (error) {
+        console.error('Error getting OTP status:', error);
+    }
+}
+
+async function sendOTP(email) {
+    try {
+        const response = await fetch('/accounts/send-otp/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ email: email })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const remainingEl = document.getElementById('otp-remaining');
+            if (remainingEl) {
+                remainingEl.textContent = `You have ${data.remaining} OTP requests remaining today.`;
+            }
+        } else {
+            if (response.status === 429) {
+                showFieldError('otp_error', data.error);
+                document.getElementById('resend-otp-btn').disabled = true;
+            } else {
+                showFieldError('otp_error', data.error || 'Failed to send OTP');
+            }
+        }
+    } catch (error) {
+        console.error('OTP send error:', error);
+        showFieldError('otp_error', 'Failed to send OTP. Please check your connection.');
+    }
+}
+
+async function resendOTP() {
+    const btn = document.getElementById('resend-otp-btn');
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    await sendOTP(registrationData.email);
+    
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }, 60000);
+}
+
+async function verifyOTP() {
+    clearFieldErrors();
+    
+    const otp = document.getElementById('otp').value.trim();
+    
+    if (!otp || otp.length !== 6 || !/^\d+$/.test(otp)) {
+        showFieldError('otp_error', 'Please enter a valid 6-digit code');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const response = await fetch('/accounts/verify-otp/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ 
+                email: registrationData.email,
+                otp: otp 
+            })
+        });
+        
+        const data = await response.json();
+        hideLoading();
+        
+        if (data.success) {
+            goToStep(3);
+        } else {
+            showFieldError('otp_error', data.error || 'Invalid OTP');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('OTP verification error:', error);
+        showFieldError('otp_error', 'Verification failed');
+    }
+}
+
+// Step 3 Validation
+function validateStep3() {
+    clearFieldErrors();
+    
+    const idFront = document.getElementById('id_front').files[0];
+    const idBack = document.getElementById('id_back').files[0];
+    const selfiePhoto = document.getElementById('selfie_photo').files[0];
+    const livenessConfirmed = document.getElementById('liveness_confirmed').checked;
+    
+    let hasError = false;
+    
+    if (!idFront) {
+        showFieldError('id_front_error', 'Front of ID is required');
+        hasError = true;
+    } else if (idFront.size > 10 * 1024 * 1024) {
+        showFieldError('id_front_error', 'Image size must be less than 10MB');
+        hasError = true;
+    }
+    
+    if (!idBack) {
+        showFieldError('id_back_error', 'Back of ID is required');
+        hasError = true;
+    } else if (idBack.size > 10 * 1024 * 1024) {
+        showFieldError('id_back_error', 'Image size must be less than 10MB');
+        hasError = true;
+    }
+    
+    if (!selfiePhoto) {
+        showFieldError('selfie_error', 'Selfie photo is required');
+        hasError = true;
+    } else if (selfiePhoto.size > 10 * 1024 * 1024) {
+        showFieldError('selfie_error', 'Image size must be less than 10MB');
+        hasError = true;
+    }
+    
+    if (!livenessConfirmed) {
+        showFieldError('liveness_error', 'Please confirm that the selfie is a live photo');
+        hasError = true;
+    }
+    
+    if (hasError) return;
+    
+    goToStep(4);
+}
+
+// Image previews
+document.getElementById('id_front').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('id_front_preview');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.querySelector('img').src = e.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.classList.add('hidden');
+    }
+});
+
+document.getElementById('id_back').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('id_back_preview');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.querySelector('img').src = e.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.classList.add('hidden');
+    }
+});
+
+document.getElementById('selfie_photo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('selfie_preview');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.querySelector('img').src = e.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.classList.add('hidden');
+    }
+});
+
+// Password Functions
+document.getElementById('password1').addEventListener('input', function() {
+    const password = this.value;
+    let strength = 0;
+    
+    const hasLength = password.length >= 8;
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    document.getElementById('rule-length').innerHTML = hasLength ? '✓ At least 8 characters' : '○ At least 8 characters';
+    document.getElementById('rule-lowercase').innerHTML = hasLower ? '✓ At least one lowercase' : '○ At least one lowercase';
+    document.getElementById('rule-uppercase').innerHTML = hasUpper ? '✓ At least one uppercase' : '○ At least one uppercase';
+    document.getElementById('rule-number').innerHTML = hasNumber ? '✓ At least one number' : '○ At least one number';
+    document.getElementById('rule-special').innerHTML = hasSpecial ? '✓ At least one special character' : '○ At least one special character';
+    
+    if (hasLength) strength += 20;
+    if (hasLower) strength += 20;
+    if (hasUpper) strength += 20;
+    if (hasNumber) strength += 20;
+    if (hasSpecial) strength += 20;
+    
+    const strengthBar = document.getElementById('passwordStrength');
+    strengthBar.style.width = strength + '%';
+    
+    if (strength < 40) {
+        strengthBar.className = 'strength-bar strength-weak';
+        document.getElementById('strengthText').textContent = 'Weak';
+    } else if (strength < 80) {
+        strengthBar.className = 'strength-bar strength-medium';
+        document.getElementById('strengthText').textContent = 'Medium';
+    } else {
+        strengthBar.className = 'strength-bar strength-strong';
+        document.getElementById('strengthText').textContent = 'Strong';
+    }
+    
+    checkPasswordMatch();
+});
+
+document.getElementById('password2').addEventListener('input', checkPasswordMatch);
+
+function checkPasswordMatch() {
+    const password1 = document.getElementById('password1').value;
+    const password2 = document.getElementById('password2').value;
+    const mismatchDiv = document.getElementById('password-mismatch');
+    
+    if (password2 && password1 !== password2) {
+        mismatchDiv.classList.remove('hidden');
+    } else {
+        mismatchDiv.classList.add('hidden');
+    }
+}
+
+// Submit registration
+async function submitRegistration() {
+    clearFieldErrors();
+    
+    const password1 = document.getElementById('password1').value;
+    const password2 = document.getElementById('password2').value;
+    const termsAgreed = document.getElementById('terms_agreed').checked;
+    const idFront = document.getElementById('id_front').files[0];
+    const idBack = document.getElementById('id_back').files[0];
+    const selfiePhoto = document.getElementById('selfie_photo').files[0];
+    
+    let hasError = false;
+    
+    if (!password1) {
+        showFieldError('password1_error', 'Password is required');
+        hasError = true;
+    } else {
+        const hasLength = password1.length >= 8;
+        const hasLower = /[a-z]/.test(password1);
+        const hasUpper = /[A-Z]/.test(password1);
+        const hasNumber = /[0-9]/.test(password1);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password1);
+        const rulesMet = [hasLength, hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+        
+        if (rulesMet < 3) {
+            showFieldError('password1_error', 'Please choose a stronger password');
+            hasError = true;
+        }
+    }
+    
+    if (!password2) {
+        showFieldError('password2_error', 'Please confirm your password');
+        hasError = true;
+    } else if (password1 !== password2) {
+        showFieldError('password2_error', 'Passwords do not match');
+        hasError = true;
+    }
+    
+    if (!termsAgreed) {
+        showFieldError('terms_error', 'You must agree to the Terms and Privacy Policy');
+        hasError = true;
+    }
+    
+    if (hasError) return;
+    
+    showLoading();
+    
+    const formData = new FormData();
+    formData.append('full_name', registrationData.full_name);
+    formData.append('email', registrationData.email);
+    formData.append('id_number', registrationData.id_number);
+    formData.append('county', registrationData.county);
+    formData.append('phone_number', registrationData.phone_number || '');
+    formData.append('password1', password1);
+    formData.append('password2', password2);
+    formData.append('id_front', idFront);
+    formData.append('id_back', idBack);
+    formData.append('selfie_photo', selfiePhoto);
+    formData.append('terms_agreed', termsAgreed ? 'true' : 'false');
+    
+    try {
+        const response = await fetch('/accounts/admin-register/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+        
+        hideLoading();
+        
+        if (response.redirected) {
+            window.location.href = response.url;
+        } else {
+            const data = await response.json();
+            
+            if (data.field_errors) {
+                for (const [field, errors] of Object.entries(data.field_errors)) {
+                    const errorField = field + '_error';
+                    showFieldError(errorField, errors.join(', '));
+                }
+            } else if (data.error) {
+                showGlobalError(data.error);
+            } else {
+                showGlobalError('Registration failed. Please try again.');
+            }
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Registration error:', error);
+        showGlobalError('Network error. Please check your connection.');
+    }
+}
+
+// Helper functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Create stars
+function createStars() {
+    const starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
+    
+    starsContainer.innerHTML = '';
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', createStars);
+document.addEventListener('themeChanged', createStars);
+</script>
+{% endblock %}

@@ -1,0 +1,716 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Backup Management - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 hero-text">Backup Management</h1>
+            <p class="text-gray-600 dark:text-gray-400">Create, download, and restore system backups</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="openCreateBackupModal()" 
+                    class="px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-plus mr-2"></i>
+                Create Backup
+            </button>
+            <a href="{% url 'admin_panel:backup_settings' %}" 
+               class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <i class="fas fa-cog mr-2"></i>
+                Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Backup Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Backups</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_backups }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Size</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_size }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Disk Usage</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ disk_used }} / {{ disk_total }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Auto Backup</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ backup_frequency }}</p>
+        </div>
+    </div>
+
+    <!-- Disk Usage Chart -->
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Storage Overview</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1">
+                <div class="h-48 w-48 mx-auto relative">
+                    <canvas id="diskChart"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                        <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ disk_percent|floatformat:1 }}%</span>
+                        <span class="text-xs text-gray-500">Used</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:col-span-2 space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">Used Space</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ disk_used }} / {{ disk_total }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-gray-900 dark:bg-white h-2.5 rounded-full" style="width: {{ disk_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-1">Free Space</p>
+                        <p class="text-xl font-bold text-gray-900 dark:text-white">{{ disk_free }}</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-1">Backup Directory</p>
+                        <p class="text-sm font-mono text-gray-700 dark:text-gray-300 truncate">{{ backup_dir }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backups List -->
+    <div class="glass-card p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Available Backups</h2>
+            
+            <div class="flex flex-wrap gap-3">
+                <input type="text" 
+                       id="searchBackup" 
+                       placeholder="Search backups..." 
+                       class="form-input px-4 py-2 w-64">
+                
+                <select id="typeFilter" class="form-select px-4 py-2">
+                    <option value="all">All Types</option>
+                    <option value="manual">Manual</option>
+                    <option value="auto">Automatic</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div id="bulkActions" class="hidden mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-between">
+            <div>
+                <span class="text-sm font-medium text-gray-900 dark:text-white" id="selectedCount">0</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400"> backups selected</span>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="downloadSelected()" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    <i class="fas fa-download mr-2"></i>Download Selected
+                </button>
+                <button onclick="deleteSelected()" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm hover:bg-red-700 transition">
+                    <i class="fas fa-trash mr-2"></i>Delete Selected
+                </button>
+            </div>
+        </div>
+
+        <!-- Backups Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="py-3 px-4 w-10">
+                            <input type="checkbox" id="selectAll" class="checkbox">
+                        </th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Backup ID</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Date/Time</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Type</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Size</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Contents</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for backup in backups %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50" data-backup-id="{{ backup.id }}">
+                        <td class="py-3 px-4">
+                            <input type="checkbox" class="backup-checkbox checkbox" value="{{ backup.id }}">
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="text-sm font-mono text-gray-900 dark:text-white">{{ backup.id }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ backup.created_at|date:"Y-m-d H:i:s" }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                {% if backup.type == 'manual' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400
+                                {% else %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400{% endif %}">
+                                {{ backup.type|title }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">{{ backup.size }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-1">
+                                {% if 'database' in backup.contents %}
+                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs" title="Database">DB</span>
+                                {% endif %}
+                                {% if 'media' in backup.contents %}
+                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs" title="Media">📁</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <button onclick="viewBackupDetails('{{ backup.id }}')" 
+                                        class="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                                        title="View Details">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                                <a href="{% url 'admin_panel:download_backup' backup.id %}" 
+                                   class="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                                   title="Download">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <button onclick="restoreBackup('{{ backup.id }}')" 
+                                        class="p-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition"
+                                        title="Restore">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button onclick="deleteBackup('{{ backup.id }}')" 
+                                        class="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                                        title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-gray-500 dark:text-gray-400">
+                            <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-database text-3xl text-gray-400"></i>
+                            </div>
+                            <p class="text-lg">No backups found</p>
+                            <p class="text-sm mt-2">Create your first backup to get started</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Create Backup Modal -->
+<div id="createBackupModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeCreateBackupModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-8 max-w-md w-full">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Create Backup</h3>
+                <button onclick="closeCreateBackupModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="createBackupForm" onsubmit="createBackup(event)">
+                {% csrf_token %}
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Backup Type</label>
+                        <select name="type" class="form-select w-full">
+                            <option value="manual">Manual Backup</option>
+                            <option value="auto">Automatic Backup</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="include_db" value="true" checked class="checkbox">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Include Database</span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="include_media" value="true" checked class="checkbox">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Include Media Files</span>
+                        </label>
+                    </div>
+                    
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl">
+                        <p class="text-xs text-yellow-800 dark:text-yellow-400">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Backup may take several minutes depending on database size.
+                        </p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeCreateBackupModal()" 
+                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" id="createBackupBtn"
+                                class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                            Start Backup
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <div id="backupProgress" class="hidden mt-4">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Creating backup...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-gray-900 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Details Modal -->
+<div id="detailsModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDetailsModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Backup Details</h3>
+                <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="backupDetails" class="space-y-4">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div id="restoreModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeRestoreModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-8 max-w-md w-full">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-3xl text-yellow-600 dark:text-yellow-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Restore Backup</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Restoring will overwrite current data. This action cannot be undone.
+                </p>
+            </div>
+            
+            <form id="restoreForm" onsubmit="confirmRestore(event)">
+                {% csrf_token %}
+                <input type="hidden" name="backup_id" id="restoreBackupId">
+                
+                <div class="space-y-3 mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="restore_db" value="true" checked class="checkbox">
+                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Restore Database</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="restore_media" value="true" checked class="checkbox">
+                        <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Restore Media Files</span>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeRestoreModal()" 
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-full text-sm font-medium hover:bg-yellow-700 transition">
+                        Confirm Restore
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+{% if messages %}
+<div class="fixed top-24 right-4 z-50 space-y-2" id="messageContainer">
+    {% for message in messages %}
+    <div class="glass-card p-4 border-l-4 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %} animate-slide-in">
+        <div class="flex items-center">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle text-green-500{% elif message.tags == 'error' %}fa-exclamation-circle text-red-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{{ message }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+.peer:checked ~ .peer-checked\:bg-gray-900 {
+    background-color: #111827;
+}
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white {
+    background-color: white;
+}
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+}
+
+/* Message animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#messageContainer {
+    pointer-events: none;
+}
+
+#messageContainer > div {
+    pointer-events: auto;
+}
+</style>
+
+<script>
+// Storage Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('diskChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Used Space', 'Free Space'],
+                datasets: [{
+                    data: [{{ disk_percent }}, {{ 100|add:'-'|add:disk_percent }}],
+                    backgroundColor: ['#111827', '#E5E7EB'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    // Auto-hide messages
+    const messages = document.querySelectorAll('#messageContainer > div');
+    messages.forEach((message, index) => {
+        setTimeout(() => {
+            message.style.animation = 'fadeOut 0.5s ease-out forwards';
+            setTimeout(() => message.remove(), 500);
+        }, 5000 + (index * 200));
+    });
+});
+
+// Filter and search functionality
+document.getElementById('typeFilter')?.addEventListener('change', filterTable);
+document.getElementById('searchBackup')?.addEventListener('input', filterTable);
+
+function filterTable() {
+    const type = document.getElementById('typeFilter').value;
+    const search = document.getElementById('searchBackup').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('#backupsTable tbody tr');
+    
+    rows.forEach(row => {
+        let show = true;
+        
+        if (type !== 'all') {
+            const typeCell = row.querySelector('td:nth-child(4) span').textContent.toLowerCase();
+            if (!typeCell.includes(type)) show = false;
+        }
+        
+        if (show && search) {
+            const text = row.textContent.toLowerCase();
+            if (!text.includes(search)) show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+// Checkbox handling
+document.getElementById('selectAll')?.addEventListener('change', function(e) {
+    const checkboxes = document.querySelectorAll('.backup-checkbox');
+    checkboxes.forEach(cb => cb.checked = e.target.checked);
+    updateSelectedCount();
+});
+
+document.querySelectorAll('.backup-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('.backup-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = selected;
+    document.getElementById('bulkActions').classList.toggle('hidden', selected === 0);
+}
+
+function getSelectedIds() {
+    const selected = [];
+    document.querySelectorAll('.backup-checkbox:checked').forEach(cb => {
+        selected.push(cb.value);
+    });
+    return selected;
+}
+
+function downloadSelected() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    window.location.href = `/admin-panel/data/download-backups/?ids=${ids.join(',')}`;
+}
+
+function deleteSelected() {
+    const ids = getSelectedIds();
+    if (ids.length === 0 || !confirm(`Delete ${ids.length} selected backup(s)?`)) return;
+    
+    fetch('/admin-panel/data/backups/delete-bulk/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ ids: ids })
+    }).then(response => {
+        if (response.ok) location.reload();
+    });
+}
+
+function openCreateBackupModal() {
+    document.getElementById('createBackupModal').classList.remove('hidden');
+}
+
+function closeCreateBackupModal() {
+    document.getElementById('createBackupModal').classList.add('hidden');
+    document.getElementById('backupProgress').classList.add('hidden');
+    document.getElementById('createBackupForm').reset();
+}
+
+function createBackup(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const progress = document.getElementById('backupProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    
+    progress.classList.remove('hidden');
+    
+    // Simulate progress (replace with actual progress tracking)
+    let width = 0;
+    const interval = setInterval(() => {
+        if (width >= 90) {
+            clearInterval(interval);
+        } else {
+            width += 10;
+            progressBar.style.width = width + '%';
+            progressPercent.textContent = width + '%';
+        }
+    }, 500);
+    
+    fetch('/admin-panel/data/backup/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        progressPercent.textContent = '100%';
+        
+        if (data.success) {
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Error: ' + data.error);
+            progress.classList.add('hidden');
+        }
+    })
+    .catch(error => {
+        clearInterval(interval);
+        alert('Error creating backup');
+        progress.classList.add('hidden');
+    });
+}
+
+function viewBackupDetails(backupId) {
+    fetch(`/admin-panel/data/backup/${backupId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('backupDetails');
+            let html = '<div class="space-y-3">';
+            
+            for (const [key, value] of Object.entries(data)) {
+                if (key !== 'files') {
+                    html += `<div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                        <span class="text-sm text-gray-500">${key.replace(/_/g, ' ').title()}</span>
+                        <span class="text-sm font-medium text-gray-900">${value}</span>
+                    </div>`;
+                }
+            }
+            
+            if (data.files && data.files.length) {
+                html += '<div class="mt-4"><h4 class="text-sm font-medium mb-2">Files:</h4>';
+                data.files.forEach(file => {
+                    html += `<div class="flex justify-between text-xs text-gray-600 py-1">
+                        <span>${file.name}</span>
+                        <span>${file.size}</span>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            content.innerHTML = html;
+            document.getElementById('detailsModal').classList.remove('hidden');
+        });
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').classList.add('hidden');
+}
+
+function restoreBackup(backupId) {
+    document.getElementById('restoreBackupId').value = backupId;
+    document.getElementById('restoreModal').classList.remove('hidden');
+}
+
+function closeRestoreModal() {
+    document.getElementById('restoreModal').classList.add('hidden');
+}
+
+function confirmRestore(event) {
+    event.preventDefault();
+    
+    const backupId = document.getElementById('restoreBackupId').value;
+    const formData = new FormData(event.target);
+    
+    fetch(`/admin-panel/data/backup/${backupId}/restore/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Backup restored successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+        closeRestoreModal();
+    });
+}
+
+function deleteBackup(backupId) {
+    if (confirm('Delete this backup?')) {
+        fetch(`/admin-panel/data/backup/${backupId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        }).then(response => {
+            if (response.ok) location.reload();
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCreateBackupModal();
+        closeDetailsModal();
+        closeRestoreModal();
+    }
+});
+</script>
+{% endblock %}

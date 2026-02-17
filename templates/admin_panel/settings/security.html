@@ -1,0 +1,261 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Security Settings - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Security Settings</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Configure security and access control</p>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Password Policy -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Password Policy</h2>
+            
+            <form method="post" action="{% url 'admin_panel:security_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Minimum Password Length</label>
+                        <input type="number" name="min_password_length" value="{{ settings.min_password_length|default:'8' }}" class="form-input w-full" min="6" max="20">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Expiry (days)</label>
+                        <input type="number" name="password_expiry_days" value="{{ settings.password_expiry_days|default:'90' }}" class="form-input w-full" min="0" max="365">
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="require_uppercase" id="require_uppercase" class="checkbox" {% if settings.require_uppercase %}checked{% endif %}>
+                        <label for="require_uppercase" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require at least one uppercase letter</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="require_lowercase" id="require_lowercase" class="checkbox" {% if settings.require_lowercase %}checked{% endif %}>
+                        <label for="require_lowercase" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require at least one lowercase letter</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="require_numbers" id="require_numbers" class="checkbox" {% if settings.require_numbers %}checked{% endif %}>
+                        <label for="require_numbers" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require at least one number</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="require_special" id="require_special" class="checkbox" {% if settings.require_special %}checked{% endif %}>
+                        <label for="require_special" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require at least one special character</label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" name="password_policy" value="1" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Password Policy
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Session Security -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Session Security</h2>
+            
+            <form method="post" action="{% url 'admin_panel:security_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Session Timeout (minutes)</label>
+                        <input type="number" name="session_timeout" value="{{ settings.session_timeout|default:'30' }}" class="form-input w-full" min="5" max="480">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Concurrent Sessions</label>
+                        <input type="number" name="max_concurrent_sessions" value="{{ settings.max_concurrent_sessions|default:'1' }}" class="form-input w-full" min="1" max="10">
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Force HTTPS</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Redirect all HTTP traffic to HTTPS</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="force_https" class="sr-only peer" {% if settings.force_https %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Secure Cookies</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Set secure flag on all cookies</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="secure_cookies" class="sr-only peer" {% if settings.secure_cookies %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" name="session_security" value="1" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Session Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Login Protection -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Login Protection</h2>
+            
+            <form method="post" action="{% url 'admin_panel:security_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Login Attempts</label>
+                        <input type="number" name="max_login_attempts" value="{{ settings.max_login_attempts|default:'5' }}" class="form-input w-full" min="3" max="10">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lockout Duration (minutes)</label>
+                        <input type="number" name="lockout_duration" value="{{ settings.lockout_duration|default:'15' }}" class="form-input w-full" min="5" max="120">
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Enable CAPTCHA</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Require CAPTCHA after failed attempts</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="enable_captcha" class="sr-only peer" {% if settings.enable_captcha %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Remember Me</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Allow users to stay logged in</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="allow_remember_me" class="sr-only peer" {% if settings.allow_remember_me %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" name="login_protection" value="1" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Login Protection
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Two-Factor Authentication -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Two-Factor Authentication</h2>
+            
+            <form method="post" action="{% url 'admin_panel:security_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Require 2FA for Admins</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Admins must set up two-factor authentication</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="require_2fa_admin" class="sr-only peer" {% if settings.require_2fa_admin %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">Require 2FA for Voters</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Voters must set up two-factor authentication</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="require_2fa_voter" class="sr-only peer" {% if settings.require_2fa_voter %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" name="two_factor" value="1" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save 2FA Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages from Django -->
+{% if messages %}
+<div class="fixed top-24 right-4 z-50 space-y-2" id="messageContainer">
+    {% for message in messages %}
+    <div class="glass-card p-4 border-l-4 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %} animate-slide-in">
+        <div class="flex items-center">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle text-green-500{% elif message.tags == 'error' %}fa-exclamation-circle text-red-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{{ message }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<style>
+.peer:checked ~ .peer-checked\:bg-gray-900 {
+    background-color: #111827;
+}
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white {
+    background-color: white;
+}
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+}
+
+/* Message animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#messageContainer {
+    pointer-events: none;
+}
+
+#messageContainer > div {
+    pointer-events: auto;
+}
+</style>
+
+<script>
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('#messageContainer > div');
+    messages.forEach((message, index) => {
+        setTimeout(() => {
+            message.style.animation = 'fadeOut 0.5s ease-out forwards';
+            setTimeout(() => message.remove(), 500);
+        }, 5000 + (index * 200));
+    });
+});
+</script>
+{% endblock %}

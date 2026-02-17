@@ -1,0 +1,371 @@
+# ==================== PYTHON ====================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+pythonenv*
+.venv
+virtualenv/
+venv_*/
+.env[0-9]*
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.env.production
+.env.development
+.env.local
+.env.*.local
+
+# ==================== DATABASE ====================
+*.db
+*.sqlite3
+*.sql
+backups/
+*.backup
+*.bak
+*.dump
+*.sql.gz
+*.sql.zip
+pg_log/
+postgresql-*.log
+mysql.log
+mongod.log
+
+# Database backups directory
+backups/*.db
+backups/*.sql
+backups/*.sqlite3
+backups/*.gz
+backups/*.zip
+backups/backup_*/
+
+# ==================== MEDIA FILES ====================
+media/
+mediafiles/
+uploads/
+user_uploads/
+profile_pics/
+documents/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.ico
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+!.gitkeep
+
+# ==================== STATIC FILES ====================
+staticfiles/
+static_collected/
+static_root/
+*.css.map
+*.js.map
+
+# ==================== IDE / EDITORS ====================
+# VS Code
+.vscode/
+.vscode/settings.json
+.vscode/launch.json
+.code-workspace
+
+# IntelliJ / PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.project
+.pydevproject
+.classpath
+.settings/
+
+# NetBeans
+nbproject/
+.nb-gradle/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ==================== OS GENERATED ====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.lnk
+desktop.ini
+$RECYCLE.BIN/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Mac OS
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# ==================== LOGS ====================
+logs/
+*.log
+log/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==================== PROJECT SPECIFIC ====================
+# Django project specific
+*.db
+*.sqlite3
+local_settings.py
+.env
+.env.production
+.env.development
+
+# Static & Media
+static/
+media/
+staticfiles/
+mediafiles/
+
+# Backups
+backups/
+backups/*.db
+backups/*.sql
+backups/*.sqlite3
+backups/*.gz
+backups/*.zip
+backups/backup_*/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ==================== SECRETS ====================
+*.key
+*.pem
+*.crt
+*.p12
+secrets/
+secret_key.txt
+oauth_credentials.json
+client_secret.json
+service_account.json
+
+# ==================== TEST FILES ====================
+test_*.py
+tests/test_*.py
+test_*.json
+*.test.js
+*.spec.js
+coverage/
+htmlcov/
+.tox/
+.pytest_cache/
+
+# ==================== PACKAGE MANAGER ====================
+# npm
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ==================== DEPLOYMENT ====================
+*.pid
+*.seed
+*.pid.lock
+.DS_Store
+capybara-*.html
+rerun.txt
+pickle-email-*.html
+
+# ==================== RENDER.COM SPECIFIC ====================
+# Render uses these, so we don't want to ignore them
+!render.yaml
+!render_start.sh
+!Procfile
+
+# But ignore local Render configs
+.render/
+.env.render
+
+# ==================== GIT KEEP FILES ====================
+# Allow empty directories to be tracked with .gitkeep
+!.gitkeep
+
+# ==================== KEEP THESE FILES (DON'T IGNORE) ====================
+!requirements.txt
+!requirements-prod.txt
+!requirements-dev.txt
+!manage.py
+!agora_backend/settings.py
+!agora_backend/settings_production.py
+!.env.example
+!README.md
+!DEPLOY.md
+!LICENSE
+
+# ==================== CACHE FILES ====================
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# ==================== MIGRATIONS ====================
+# Don't ignore migration files
+!*/migrations/*.py
+# But ignore compiled migrations
+*/migrations/*.pyc
+__pycache__/

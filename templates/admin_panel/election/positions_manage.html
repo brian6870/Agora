@@ -1,0 +1,692 @@
+
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Manage Positions - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2 hero-text">Positions</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage election positions across all elections</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'admin_panel:position_create' %}" 
+               class="inline-flex items-center px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-plus mr-2"></i>
+                Add Position
+            </a>
+            <!-- Bulk Upload Button -->
+            <button onclick="openBulkUploadModal()" 
+                    class="inline-flex items-center px-6 py-3 bg-gray-700 text-white dark:bg-gray-600 dark:text-white rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-700 transform hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-upload mr-2"></i>
+                Bulk Upload
+            </button>
+            <a href="{% url 'admin_panel:election_list' %}" 
+               class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Elections
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-6">
+        <form method="get" class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <select name="election" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Elections</option>
+                    {% for election in elections %}
+                    <option value="{{ election.id }}" {% if selected_election == election.id|stringformat:"s" %}selected{% endif %}>
+                        {{ election.name }} ({{ election.get_election_type_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" 
+                       name="search" 
+                       value="{{ search }}" 
+                       class="form-input" 
+                       placeholder="Search positions...">
+            </div>
+            <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-search mr-2"></i>Filter
+            </button>
+            <a href="{% url 'admin_panel:all_positions' %}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                Clear
+            </a>
+        </form>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Positions</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_positions }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Positions</p>
+            <p class="text-3xl font-bold text-green-600">{{ active_positions }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Elections with Positions</p>
+            <p class="text-3xl font-bold text-blue-600">{{ elections_with_positions }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Avg Positions/Election</p>
+            <p class="text-3xl font-bold text-purple-600">{{ avg_positions_per_election|default:'0' }}</p>
+        </div>
+    </div>
+
+    <!-- Positions Table -->
+    <div class="glass-card p-6">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Election</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Order</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Position Name</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Description</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Max Votes</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Candidates</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for position in positions %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                            <a href="{% url 'admin_panel:election_detail' position.election.id %}" class="hover:text-gray-900 dark:hover:text-white">
+                                {{ position.election.name }}
+                            </a>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ position.order }}</td>
+                        <td class="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{{ position.name }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ position.description|truncatechars:50 }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ position.max_votes }}</td>
+                        <td class="py-3 px-4">
+                            {% if position.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Active</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ position.candidates.count }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'admin_panel:position_candidates' position.id %}" 
+                                   class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" 
+                                   title="View Candidates">
+                                    <i class="fas fa-user-tie text-gray-600 dark:text-gray-400"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:position_edit' position.id %}" 
+                                   class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" 
+                                   title="Edit">
+                                    <i class="fas fa-edit text-gray-600 dark:text-gray-400"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:position_delete' position.id %}" 
+                                   class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition" 
+                                   title="Delete">
+                                    <i class="fas fa-trash text-red-600 dark:text-red-400"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-list-ol fa-3x mb-3 opacity-50"></i>
+                            <p>No positions found</p>
+                            <div class="mt-4 space-x-3">
+                                <a href="{% url 'admin_panel:position_create' %}" class="inline-block px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                                    Add your first position
+                                </a>
+                                <button onclick="openBulkUploadModal()" class="inline-block px-4 py-2 bg-gray-700 text-white dark:bg-gray-600 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-700 transition">
+                                    Bulk Upload
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_election %}&election={{ selected_election }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_election %}&election={{ selected_election }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bulk Upload Card -->
+    <div class="glass-card p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Bulk Upload Positions</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Upload multiple positions at once using a CSV file</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'admin_panel:download_position_template' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-download mr-2"></i>
+                    Download Template
+                </a>
+                <button onclick="openBulkUploadModal()" 
+                        class="inline-flex items-center px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-all">
+                    <i class="fas fa-upload mr-2"></i>
+                    Upload CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Upload Modal -->
+<div id="bulkUploadModal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeBulkUploadModal()"></div>
+    
+    <!-- Modal Container -->
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Bulk Upload Positions</h2>
+                <button onclick="closeBulkUploadModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Instructions -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
+                    <h3 class="text-sm font-medium text-blue-800 dark:text-blue-400 mb-2">Instructions</h3>
+                    <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                        <li>Download the template CSV file first</li>
+                        <li>Fill in the position details (election_id, name, order, max_votes, description, is_active)</li>
+                        <li>election_id must be a valid election ID from the system</li>
+                        <li>is_active should be 1 for active, 0 for inactive</li>
+                        <li>max_votes should be between 1 and 10</li>
+                        <li>order determines the position on the ballot (must be unique per election)</li>
+                    </ul>
+                </div>
+                
+                <!-- Upload Form -->
+                <form id="bulkUploadForm" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- File Upload Area -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Select CSV File
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-6 text-center hover:border-gray-400 dark:hover:border-gray-600 transition cursor-pointer" 
+                             onclick="document.getElementById('csvFile').click()">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Click to upload or drag and drop</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">CSV files only (max 10MB)</p>
+                            <input type="file" 
+                                   name="csv_file" 
+                                   id="csvFile" 
+                                   accept=".csv"
+                                   class="hidden"
+                                   onchange="handleFileSelect(this)">
+                        </div>
+                    </div>
+                    
+                    <!-- File Info -->
+                    <div id="fileInfo" class="hidden p-3 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-600 dark:text-green-400 mr-2"></i>
+                            <span id="fileName" class="text-sm text-green-700 dark:text-green-300"></span>
+                        </div>
+                        <button type="button" onclick="removeFile()" class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Validation Errors -->
+                    <div id="validationErrors" class="hidden p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <h4 class="text-sm font-medium text-red-800 dark:text-red-400 mb-2">Validation Errors:</h4>
+                        <ul id="errorList" class="text-xs text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                        </ul>
+                    </div>
+                    
+                    <!-- Preview Area -->
+                    <div id="previewArea" class="hidden">
+                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview (first 5 rows)</h4>
+                        <div class="overflow-x-auto max-h-60 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-800">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left">election_id</th>
+                                        <th class="px-4 py-2 text-left">name</th>
+                                        <th class="px-4 py-2 text-left">order</th>
+                                        <th class="px-4 py-2 text-left">max_votes</th>
+                                        <th class="px-4 py-2 text-left">description</th>
+                                        <th class="px-4 py-2 text-left">is_active</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div id="uploadProgress" class="hidden">
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                            <span>Uploading...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progressBar" class="bg-gray-900 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Area -->
+                    <div id="uploadResults" class="hidden p-4 rounded-xl">
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" 
+                                onclick="closeBulkUploadModal()"
+                                class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                id="uploadBtn"
+                                class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                            Upload Positions
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+/* Modal styles */
+#bulkUploadModal {
+    display: none;
+}
+
+#bulkUploadModal:not(.hidden) {
+    display: block;
+}
+
+/* Ensure modal content is scrollable on mobile */
+@media (max-width: 640px) {
+    #bulkUploadModal .bg-white {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+</style>
+
+<script>
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - initializing bulk upload');
+    
+    // Get modal element
+    const modal = document.getElementById('bulkUploadModal');
+    if (!modal) {
+        console.error('Modal element not found!');
+    }
+    
+    // Add drag and drop handlers
+    const dropZone = document.querySelector('.border-dashed');
+    if (dropZone) {
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('border-gray-900');
+        });
+        
+        dropZone.addEventListener('dragleave', function(e) {
+            this.classList.remove('border-gray-900');
+        });
+        
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-gray-900');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'text/csv') {
+                document.getElementById('csvFile').files = e.dataTransfer.files;
+                handleFileSelect(document.getElementById('csvFile'));
+            } else {
+                alert('Please drop a valid CSV file');
+            }
+        });
+    }
+    
+    // Add form submit handler
+    const form = document.getElementById('bulkUploadForm');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+    }
+});
+
+// ==================== MODAL FUNCTIONS ====================
+function openBulkUploadModal() {
+    console.log('Opening modal');
+    const modal = document.getElementById('bulkUploadModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    } else {
+        console.error('Modal not found!');
+    }
+}
+
+function closeBulkUploadModal() {
+    console.log('Closing modal');
+    const modal = document.getElementById('bulkUploadModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        resetUploadForm();
+    }
+}
+
+function resetUploadForm() {
+    document.getElementById('csvFile').value = '';
+    document.getElementById('fileInfo').classList.add('hidden');
+    document.getElementById('previewArea').classList.add('hidden');
+    document.getElementById('uploadProgress').classList.add('hidden');
+    document.getElementById('uploadResults').classList.add('hidden');
+    document.getElementById('validationErrors').classList.add('hidden');
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('uploadBtn').innerHTML = 'Upload Positions';
+}
+
+// ==================== FILE HANDLING ====================
+function handleFileSelect(input) {
+    console.log('File selected');
+    const file = input.files[0];
+    if (file) {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size exceeds 10MB limit');
+            return;
+        }
+        
+        // Check file type
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+            alert('Please select a valid CSV file');
+            return;
+        }
+        
+        processFile(file);
+    }
+}
+
+function processFile(file) {
+    // Show file info
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileInfo').classList.remove('hidden');
+    
+    // Preview CSV
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewCSV(e.target.result);
+    };
+    reader.onerror = function() {
+        alert('Error reading file');
+    };
+    reader.readAsText(file);
+}
+
+function previewCSV(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length === 0) {
+        showValidationErrors('File is empty');
+        return;
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    
+    // Validate headers
+    const requiredHeaders = ['election_id', 'name', 'order', 'max_votes', 'description', 'is_active'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    
+    if (missingHeaders.length > 0) {
+        showValidationErrors(`Missing required columns: ${missingHeaders.join(', ')}`);
+        return;
+    }
+    
+    // Clear previous errors
+    document.getElementById('validationErrors').classList.add('hidden');
+    
+    // Show preview (first 5 data rows)
+    const previewBody = document.getElementById('previewBody');
+    previewBody.innerHTML = '';
+    
+    for (let i = 1; i < Math.min(lines.length, 6); i++) {
+        const cells = lines[i].split(',').map(c => c.trim());
+        const row = document.createElement('tr');
+        
+        // Create cells for each column
+        for (let j = 0; j < 6; j++) {
+            const cell = document.createElement('td');
+            cell.className = 'px-4 py-2';
+            
+            if (j < cells.length) {
+                // Highlight missing required fields
+                if ((j === 0 || j === 1) && !cells[j]) {
+                    cell.innerHTML = '<span class="text-red-600">Missing</span>';
+                } else {
+                    cell.textContent = cells[j].substring(0, 30) + (cells[j].length > 30 ? '...' : '');
+                }
+            } else {
+                cell.innerHTML = '<span class="text-gray-400">-</span>';
+            }
+            
+            row.appendChild(cell);
+        }
+        
+        previewBody.appendChild(row);
+    }
+    
+    document.getElementById('previewArea').classList.remove('hidden');
+}
+
+function showValidationErrors(message) {
+    const errorDiv = document.getElementById('validationErrors');
+    const errorList = document.getElementById('errorList');
+    errorList.innerHTML = `<li>${message}</li>`;
+    errorDiv.classList.remove('hidden');
+}
+
+function removeFile() {
+    document.getElementById('csvFile').value = '';
+    document.getElementById('fileInfo').classList.add('hidden');
+    document.getElementById('previewArea').classList.add('hidden');
+    document.getElementById('validationErrors').classList.add('hidden');
+}
+
+// ==================== CSRF TOKEN HELPER ====================
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// ==================== FORM SUBMISSION ====================
+function handleFormSubmit(e) {
+    e.preventDefault();
+    console.log('Form submitted');
+    
+    const fileInput = document.getElementById('csvFile');
+    if (!fileInput.files[0]) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('csv_file', fileInput.files[0]);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    // Show progress
+    document.getElementById('uploadProgress').classList.remove('hidden');
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadBtn').innerHTML = 'Uploading...';
+    
+    // Make AJAX call
+    fetch('/admin-panel/positions/bulk-upload/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err; });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Upload response:', data);
+        
+        // Update progress to 100%
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressPercent').textContent = '100%';
+        
+        // Show results
+        showUploadResults(data);
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showUploadResults({
+            success: false,
+            error: error.error || error.message || 'Network error occurred'
+        });
+    });
+}
+
+function showUploadResults(data) {
+    const resultsDiv = document.getElementById('uploadResults');
+    resultsDiv.classList.remove('hidden');
+    
+    if (data.success) {
+        resultsDiv.className = 'p-4 bg-green-50 dark:bg-green-900/20 rounded-xl';
+        
+        let resultsHtml = `
+            <h4 class="text-lg font-semibold text-green-800 dark:text-green-400 mb-2">Upload Successful!</h4>
+            <ul class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                <li>✓ ${data.created || 0} positions created</li>
+                <li>✓ ${data.updated || 0} positions updated</li>
+        `;
+        
+        if (data.failed > 0) {
+            resultsHtml += `<li>⚠️ ${data.failed} failed</li>`;
+        }
+        
+        if (data.errors && data.errors.length > 0) {
+            resultsHtml += '</ul><div class="mt-2 text-xs text-yellow-600 dark:text-yellow-400">';
+            data.errors.slice(0, 3).forEach(err => {
+                resultsHtml += `<p>⚠️ ${err}</p>`;
+            });
+            resultsHtml += '</div>';
+        }
+        
+        resultsHtml += `
+            </ul>
+            <div class="flex space-x-3 mt-4">
+                <button onclick="location.reload()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition">
+                    Refresh Page
+                </button>
+                <button onclick="closeBulkUploadModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">
+                    Close
+                </button>
+            </div>
+        `;
+        
+        resultsDiv.innerHTML = resultsHtml;
+    } else {
+        resultsDiv.className = 'p-4 bg-red-50 dark:bg-red-900/20 rounded-xl';
+        
+        let errorHtml = `
+            <h4 class="text-lg font-semibold text-red-800 dark:text-red-400 mb-2">Upload Failed</h4>
+            <p class="text-sm text-red-700 dark:text-red-300">${data.error || 'An error occurred during upload'}</p>
+        `;
+        
+        if (data.errors && data.errors.length > 0) {
+            errorHtml += `
+                <ul class="mt-2 text-xs text-red-600 dark:text-red-400 list-disc list-inside">
+                    ${data.errors.map(err => `<li>${err}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        errorHtml += `
+            <div class="mt-4">
+                <button onclick="closeBulkUploadModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">
+                    Close
+                </button>
+            </div>
+        `;
+        
+        resultsDiv.innerHTML = errorHtml;
+    }
+    
+    document.getElementById('uploadProgress').classList.add('hidden');
+}
+
+// ==================== KEYBOARD SHORTCUTS ====================
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('bulkUploadModal');
+        if (modal && !modal.classList.contains('hidden')) {
+            closeBulkUploadModal();
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Device Reset - Agora{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Background */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    .light .star {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .dark .star {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    /* Scroll Container */
+    .scroll-container {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        background: transparent;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .scroll-inner {
+        width: 100%;
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        background: transparent;
+    }
+    
+    .scroll-content {
+        width: 100%;
+        padding: 2rem 0;
+        min-height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Glass Card */
+    .glass-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1.5rem;
+        transition: all 300ms;
+    }
+    
+    .dark .glass-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Form Elements */
+    .form-input, .form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background-color: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 0.75rem;
+        transition: all 200ms;
+        color: #111827;
+    }
+    
+    .dark .form-input, .dark .form-textarea {
+        background-color: #1A1B1E;
+        border-color: #374151;
+        color: #FFFFFF;
+    }
+    
+    .form-input:focus, .form-textarea:focus {
+        outline: none;
+        ring: 2px solid rgba(255, 255, 255, 0.25);
+        border-color: transparent;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        padding: 0.75rem 1.5rem;
+        background-color: #111827;
+        color: white;
+        border-radius: 9999px;
+        font-size: 1rem;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 300ms;
+        border: 2px solid transparent;
+    }
+    
+    .dark .btn-primary {
+        background-color: white;
+        color: #111827;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #D1D5DB;
+    }
+    
+    .btn-secondary {
+        padding: 0.75rem 1.5rem;
+        background-color: transparent;
+        color: #4B5563;
+        border: 2px solid #D1D5DB;
+        border-radius: 9999px;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 300ms;
+        text-align: center;
+        display: inline-block;
+    }
+    
+    .dark .btn-secondary {
+        color: #9CA3AF;
+        border-color: #4B5563;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #F3F4F6;
+        transform: translateY(-2px);
+    }
+    
+    .dark .btn-secondary:hover {
+        background-color: #374151;
+        color: white;
+    }
+    
+    /* Admin Badge */
+    .admin-badge {
+        display: inline-block;
+        padding: 0.25rem 1rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 9999px;
+        color: #EF4444;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+    
+    .dark .admin-badge {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #F87171;
+    }
+    
+    /* Checkbox */
+    .checkbox {
+        width: 1rem;
+        height: 1rem;
+        background-color: #F3F4F6;
+        border: 1px solid #D1D5DB;
+        border-radius: 0.25rem;
+        accent-color: #111827;
+    }
+    
+    .dark .checkbox {
+        background-color: #1A1B1E;
+        border-color: #4B5563;
+        accent-color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Star Background -->
+<div class="stars-container" id="stars"></div>
+
+<!-- Scroll Container -->
+<div class="scroll-container">
+    <div class="scroll-inner">
+        <div class="scroll-content">
+            <div class="w-full max-w-lg mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <span class="admin-badge">Administrator</span>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+                        Admin Device Reset
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Lost access to your admin device? Request a reset.
+                    </p>
+                </div>
+                
+                <!-- Info Alert -->
+                <div class="p-4 mb-6 border border-yellow-500/30 bg-yellow-500/10 rounded-xl">
+                    <p class="text-sm text-yellow-700 dark:text-yellow-400">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Admin device reset requests require additional verification and approval.
+                    </p>
+                </div>
+                
+                <!-- Request Form -->
+                <div class="glass-card p-8">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="space-y-6">
+                            <!-- Admin ID/TSC Number -->
+                            <div>
+                                <label for="tsc_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Admin ID / TSC Number
+                                </label>
+                                <input type="text" 
+                                       name="tsc_number"
+                                       id="tsc_number"
+                                       class="form-input"
+                                       placeholder="Enter your admin ID"
+                                       required>
+                            </div>
+                            
+                            <!-- ID Number -->
+                            <div>
+                                <label for="id_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    ID Number
+                                </label>
+                                <input type="text" 
+                                       name="id_number"
+                                       id="id_number"
+                                       class="form-input"
+                                       placeholder="Enter your ID number"
+                                       required>
+                            </div>
+                            
+                            <!-- Full Name -->
+                            <div>
+                                <label for="full_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Full Name
+                                </label>
+                                <input type="text" 
+                                       name="full_name"
+                                       id="full_name"
+                                       class="form-input"
+                                       placeholder="Enter your full name"
+                                       required>
+                            </div>
+                            
+                            <!-- Reason -->
+                            <div>
+                                <label for="reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Reason for Reset
+                                </label>
+                                <textarea name="reason"
+                                          id="reason"
+                                          class="form-textarea"
+                                          rows="4"
+                                          placeholder="Please explain why you need to reset your admin device..."
+                                          required></textarea>
+                            </div>
+                            
+                            <!-- Confirmation Checkbox -->
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input type="checkbox" 
+                                           name="confirm_statement"
+                                           id="confirm_statement"
+                                           class="checkbox"
+                                           required>
+                                </div>
+                                <label for="confirm_statement" class="ml-3 text-sm text-gray-600 dark:text-gray-400">
+                                    I confirm that I have lost access to my registered admin device and understand this request requires approval.
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-3 mt-8">
+                            <button type="submit" class="btn-primary flex-1">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Submit Request
+                            </button>
+                            <a href="{% url 'accounts:admin_login' %}" class="btn-secondary flex-1 text-center">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Create stars
+function createStars() {
+    const starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
+    
+    starsContainer.innerHTML = '';
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', createStars);
+document.addEventListener('themeChanged', createStars);
+</script>
+{% endblock %}

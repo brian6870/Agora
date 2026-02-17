@@ -1,0 +1,169 @@
+<!-- Terms and Conditions Modal -->
+<div id="terms-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
+    
+    <div class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-3xl bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="modal-title">
+                        Terms and Conditions
+                    </h3>
+                    <button type="button" onclick="closeTermsModal()" class="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="px-6 py-4 max-h-[60vh] overflow-y-auto">
+                    <div class="space-y-6 text-gray-600 dark:text-gray-300">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">1. Acceptance of Terms</h4>
+                        <p>By accessing and using Agora, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use our services.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">2. Eligibility</h4>
+                        <p>You must be a registered teacher union member with a valid TSC number, at least 18 years old, and legally eligible to vote in union elections.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">3. Account Registration</h4>
+                        <p>You agree to provide accurate and complete information. Your account is non-transferable and bound to your registered device.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">4. Privacy and Data Protection</h4>
+                        <p>We collect and process your personal information as described in our Privacy Policy. This includes KYC documents and device information for security purposes.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">5. Voting</h4>
+                        <p>Each eligible member may cast one vote. Votes cannot be changed once submitted. Attempting to vote multiple times is prohibited.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">6. Prohibited Activities</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Sharing account credentials</li>
+                            <li>Attempting to manipulate voting</li>
+                            <li>Using automated tools</li>
+                            <li>Impersonating others</li>
+                            <li>Attempting to breach security</li>
+                        </ul>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">7. Termination</h4>
+                        <p>We reserve the right to suspend or terminate accounts that violate these terms.</p>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+                    <button type="button" onclick="closeTermsModal()" class="px-6 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div id="privacy-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="privacy-modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
+    
+    <div class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-3xl bg-white dark:bg-gray-900 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="privacy-modal-title">
+                        Privacy Policy
+                    </h3>
+                    <button type="button" onclick="closePrivacyModal()" class="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="px-6 py-4 max-h-[60vh] overflow-y-auto">
+                    <div class="space-y-6 text-gray-600 dark:text-gray-300">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">Information We Collect</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Personal Information: Name, TSC number, ID number, email, school, county</li>
+                            <li>KYC Documents: ID card images, face photos for identity verification</li>
+                            <li>Device Information: Device fingerprint, IP address, browser type</li>
+                            <li>Voting Data: Anonymized vote records for audit</li>
+                        </ul>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">How We Use Your Information</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Verify identity for voting eligibility</li>
+                            <li>Ensure one person, one vote through device binding</li>
+                            <li>Process and record votes securely</li>
+                            <li>Communicate important election information</li>
+                            <li>Maintain audit trails for election integrity</li>
+                        </ul>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">Data Protection</h4>
+                        <p>Your data is encrypted both in transit and at rest using AES-256 encryption. We implement strict access controls and regular security audits.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">Your Rights</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Access your personal data</li>
+                            <li>Request corrections</li>
+                            <li>Request deletion (subject to election record retention)</li>
+                            <li>Opt out of non-essential communications</li>
+                        </ul>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">Data Retention</h4>
+                        <p>Election records are retained as required by union regulations. After the retention period, personal data is securely deleted or anonymized.</p>
+                        
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white">Contact Us</h4>
+                        <p>For privacy-related inquiries, contact our Data Protection Officer at privacy@agora.ke</p>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+                    <button type="button" onclick="closePrivacyModal()" class="px-6 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openTermsModal() {
+    document.getElementById('terms-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTermsModal() {
+    document.getElementById('terms-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function openPrivacyModal() {
+    document.getElementById('privacy-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePrivacyModal() {
+    document.getElementById('privacy-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Close modals when clicking outside
+window.addEventListener('click', function(event) {
+    const termsModal = document.getElementById('terms-modal');
+    const privacyModal = document.getElementById('privacy-modal');
+    
+    if (event.target === termsModal) {
+        closeTermsModal();
+    }
+    if (event.target === privacyModal) {
+        closePrivacyModal();
+    }
+});
+
+// Close on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeTermsModal();
+        closePrivacyModal();
+    }
+});
+</script>

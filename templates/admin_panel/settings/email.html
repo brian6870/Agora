@@ -1,0 +1,368 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Email Settings - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Email Settings</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Configure email notifications and templates</p>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Notification Settings -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Notification Settings</h2>
+            
+            <form method="post" action="{% url 'admin_panel:email_settings' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="space-y-3">
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Welcome Email</p>
+                            <p class="text-xs text-gray-500">Send welcome email to new users</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="welcome_email" class="sr-only peer" {% if settings.welcome_email %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">KYC Verification Email</p>
+                            <p class="text-xs text-gray-500">Notify users when KYC is verified/rejected</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="kyc_email" class="sr-only peer" {% if settings.kyc_email %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Password Reset Email</p>
+                            <p class="text-xs text-gray-500">Send password reset emails</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="reset_email" class="sr-only peer" {% if settings.reset_email %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Election Reminders</p>
+                            <p class="text-xs text-gray-500">Send election reminders to voters</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="election_reminders" class="sr-only peer" {% if settings.election_reminders %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Admin Notifications</p>
+                            <p class="text-xs text-gray-500">Notify admins of pending actions</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="admin_notifications" class="sr-only peer" {% if settings.admin_notifications %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Candidate Application Email</p>
+                            <p class="text-xs text-gray-500">Notify when candidate application status changes</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="candidate_email" class="sr-only peer" {% if settings.candidate_email %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-white">Team Application Email</p>
+                            <p class="text-xs text-gray-500">Notify when team application status changes</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="team_email" class="sr-only peer" {% if settings.team_email %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900 dark:peer-checked:bg-white"></div>
+                        </label>
+                    </label>
+                </div>
+
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Queue Settings</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Max emails per hour</label>
+                            <input type="number" name="emails_per_hour" value="{{ settings.emails_per_hour|default:'100' }}" class="form-input" min="1" max="1000">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Retry attempts</label>
+                            <input type="number" name="retry_attempts" value="{{ settings.retry_attempts|default:'3' }}" class="form-input" min="1" max="10">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit" name="action" value="save_notifications" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Notification Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Email Templates</h2>
+            
+            <div class="space-y-6">
+                {% for template in email_templates %}
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ template.name }}</h3>
+                        <button onclick="editTemplate('{{ template.id }}')" class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Subject: {{ template.subject }}</p>
+                    <p class="text-xs text-gray-500">Last modified: {{ template.updated_at|timesince }} ago</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Email Logs -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recent Email Logs</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Time</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Recipient</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Subject</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in email_logs %}
+                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                            <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ log.sent_at|timesince }} ago</td>
+                            <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ log.recipient }}</td>
+                            <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ log.subject }}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 {% if log.status == 'sent' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400{% else %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400{% endif %} rounded-full text-xs">
+                                    {{ log.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="py-4 text-center text-gray-500 dark:text-gray-400">No email logs found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages from Django -->
+{% if messages %}
+<div class="fixed top-24 right-4 z-50 space-y-2" id="messageContainer">
+    {% for message in messages %}
+    <div class="glass-card p-4 border-l-4 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %} animate-slide-in">
+        <div class="flex items-center">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle text-green-500{% elif message.tags == 'error' %}fa-exclamation-circle text-red-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{{ message }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Edit Template Modal -->
+<div id="editTemplateModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-2xl w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white" id="modalTitle">Edit Email Template</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editTemplateForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Template Name</label>
+                        <input type="text" id="template_name" class="form-input" readonly disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
+                        <input type="text" id="template_subject" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Body (HTML)</label>
+                        <textarea id="template_body" class="form-textarea" rows="10" required></textarea>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        <p>Available variables: {{ user.name }}, {{ user.email }}, {{ site_name }}, {{ verification_link }}, etc.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                        Save Template
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.peer:checked ~ .peer-checked\:bg-gray-900 {
+    background-color: #111827;
+}
+.dark .peer:checked ~ .dark\:peer-checked\:bg-white {
+    background-color: white;
+}
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+}
+
+/* Message animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#messageContainer {
+    pointer-events: none;
+}
+
+#messageContainer > div {
+    pointer-events: auto;
+}
+</style>
+
+<script>
+function editTemplate(templateId) {
+    const modal = document.getElementById('editTemplateModal');
+    modal.classList.remove('hidden');
+    
+    // Fetch template data
+    fetch(`/admin-panel/settings/email-template/${templateId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('template_name').value = data.name;
+            document.getElementById('template_name').dataset.id = templateId;
+            document.getElementById('template_subject').value = data.subject;
+            document.getElementById('template_body').value = data.body;
+        })
+        .catch(error => {
+            console.error('Error fetching template:', error);
+            alert('Failed to load template');
+            closeEditModal();
+        });
+}
+
+function closeEditModal() {
+    document.getElementById('editTemplateModal').classList.add('hidden');
+}
+
+document.getElementById('editTemplateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const templateId = document.getElementById('template_name').dataset.id;
+    const data = {
+        subject: document.getElementById('template_subject').value,
+        body: document.getElementById('template_body').value
+    };
+    
+    try {
+        const response = await fetch(`/admin-panel/settings/email-template/${templateId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            alert('Template saved successfully');
+            closeEditModal();
+            // Optionally reload to show updated timestamp
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Failed to save template');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to save template');
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('#messageContainer > div');
+    messages.forEach((message, index) => {
+        setTimeout(() => {
+            message.style.animation = 'fadeOut 0.5s ease-out forwards';
+            setTimeout(() => message.remove(), 500);
+        }, 5000 + (index * 200));
+    });
+});
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeEditModal();
+    }
+});
+</script>
+{% endblock %}

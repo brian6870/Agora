@@ -1,0 +1,274 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Voter Details - {{ voter.full_name }} - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <a href="{% url 'admin_panel:voter_list' %}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Voters
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Profile Card -->
+        <div class="glass-card p-6 md:col-span-1">
+            <div class="text-center">
+                <div class="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user text-4xl text-gray-500 dark:text-gray-400"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ voter.full_name }}</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ voter.user_type }}</p>
+                
+                <div class="mt-4">
+                    {% if voter.account_status == 'ACTIVE' %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Active</span>
+                    {% elif voter.account_status == 'SUSPENDED' %}
+                    <span class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs">Suspended</span>
+                    {% elif voter.account_status == 'PENDING' %}
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full text-xs">Pending</span>
+                    {% else %}
+                    <span class="px-3 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">{{ voter.account_status }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-6 space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">TSC Number</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.tsc_number }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">ID Number</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.id_number }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.email }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Phone</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.phone_number|default:'Not provided' }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">County</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.county }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">School</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.school|default:'Not provided' }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Registered</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.registered_at|date:"M j, Y" }}</span>
+                </div>
+            </div>
+
+            <div class="mt-6 space-y-2">
+                {% if voter.account_status == 'ACTIVE' %}
+                <button onclick="openSuspendModal({{ voter.id }})" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-full text-sm font-medium hover:bg-yellow-700 transition">
+                    <i class="fas fa-ban mr-2"></i>Suspend Account
+                </button>
+                {% elif voter.account_status == 'SUSPENDED' %}
+                <form method="post" action="{% url 'admin_panel:activate_voter' voter.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition">
+                        <i class="fas fa-check mr-2"></i>Activate Account
+                    </button>
+                </form>
+                {% endif %}
+                
+                {% if not voter.has_voted %}
+                <button onclick="openDeleteModal({{ voter.id }})" class="w-full px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                    <i class="fas fa-trash mr-2"></i>Delete Account
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="glass-card p-6 md:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Verification Status</h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">KYC Verification</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Identity documents verification</p>
+                    </div>
+                    <div>
+                        {% if voter.kyc_status == 'VERIFIED' %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Verified</span>
+                        {% elif voter.kyc_status == 'PENDING' %}
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full text-xs">Pending</span>
+                        {% elif voter.kyc_status == 'REJECTED' %}
+                        <span class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs">Rejected</span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">{{ voter.kyc_status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">TSC Verification</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Teacher service commission verification</p>
+                    </div>
+                    <div>
+                        {% if voter.tsc_verified %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Verified</span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full text-xs">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Device Binding</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Device fingerprint status</p>
+                    </div>
+                    <div>
+                        {% if voter.device_fingerprint %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Bound</span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Not Bound</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">Voting Status</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Has voted in current election</p>
+                    </div>
+                    <div>
+                        {% if voter.has_voted %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Voted</span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Not Voted</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if voter.deletion_requested %}
+            <div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                <h4 class="text-sm font-medium text-red-700 dark:text-red-400 mb-2">Deletion Requested</h4>
+                <p class="text-sm text-red-600 dark:text-red-300 mb-3">Reason: {{ voter.deletion_reason|default:'No reason provided' }}</p>
+                <p class="text-xs text-red-500 dark:text-red-400">Requested on: {{ voter.deletion_requested_at|date:"M j, Y, g:i a" }}</p>
+                <div class="flex space-x-3 mt-3">
+                    <form method="post" action="{% url 'admin_panel:approve_deletion_request' voter.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-full text-xs font-medium hover:bg-green-700 transition">
+                            Approve Deletion
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'admin_panel:reject_deletion_request' voter.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded-full text-xs font-medium hover:bg-gray-700 transition">
+                            Reject Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if voter.suspended_at %}
+            <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+                <h4 class="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-2">Suspension Details</h4>
+                <p class="text-sm text-yellow-600 dark:text-yellow-300 mb-1">Reason: {{ voter.suspension_reason|default:'No reason provided' }}</p>
+                <p class="text-xs text-yellow-500 dark:text-yellow-400">Suspended on: {{ voter.suspended_at|date:"M j, Y, g:i a" }}</p>
+                {% if voter.suspended_by %}
+                <p class="text-xs text-yellow-500 dark:text-yellow-400">Suspended by: {{ voter.suspended_by.full_name }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Suspend Modal -->
+<div id="suspendModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Suspend Account</h3>
+            <form method="post" action="{% url 'admin_panel:suspend_voter' 0 %}" id="suspendForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Suspension</label>
+                    <textarea name="reason" class="form-textarea" rows="3" required placeholder="Enter reason for suspension..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeSuspendModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-full text-sm font-medium hover:bg-yellow-700 transition">
+                        Suspend Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Account</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">This action cannot be undone. All voter data will be permanently deleted.</p>
+            </div>
+            <form method="post" action="{% url 'admin_panel:delete_voter' 0 %}" id="deleteForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Deletion</label>
+                    <textarea name="reason" class="form-textarea" rows="3" required placeholder="Enter reason for deletion..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                        Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openSuspendModal(voterId) {
+    const form = document.getElementById('suspendForm');
+    form.action = form.action.replace('/0/', '/' + voterId + '/');
+    document.getElementById('suspendModal').classList.remove('hidden');
+}
+
+function closeSuspendModal() {
+    document.getElementById('suspendModal').classList.add('hidden');
+}
+
+function openDeleteModal(voterId) {
+    const form = document.getElementById('deleteForm');
+    form.action = form.action.replace('/0/', '/' + voterId + '/');
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('suspendModal')) closeSuspendModal();
+    if (e.target === document.getElementById('deleteModal')) closeDeleteModal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,369 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Activity Log Report - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Activity Log Report</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Track all system activities and user actions</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="exportReport('pdf')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+            </button>
+            <button onclick="exportReport('csv')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-file-csv mr-2"></i>Export CSV
+            </button>
+            <button onclick="exportReport('json')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-code mr-2"></i>JSON
+            </button>
+        </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div class="glass-card p-6 mb-8">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
+                    <select name="range" class="form-select" onchange="toggleCustomRange(this)">
+                        <option value="today" {% if range == 'today' %}selected{% endif %}>Today</option>
+                        <option value="yesterday" {% if range == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                        <option value="week" {% if range == 'week' %}selected{% endif %}>This Week</option>
+                        <option value="month" {% if range == 'month' %}selected{% endif %}>This Month</option>
+                        <option value="custom" {% if range == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">User</label>
+                    <input type="text" name="user" value="{{ user_filter }}" class="form-input" placeholder="Search by user">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action Type</label>
+                    <select name="action_type" class="form-select">
+                        <option value="">All Actions</option>
+                        {% for action in action_types %}
+                        <option value="{{ action }}" {% if action == selected_action %}selected{% endif %}>{{ action }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.0 }}" {% if cat.0 == selected_category %}selected{% endif %}>{{ cat.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div id="customRange" class="grid grid-cols-1 md:grid-cols-2 gap-4 {% if range != 'custom' %}hidden{% endif %}">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">From</label>
+                    <input type="datetime-local" name="from" value="{{ from_date }}" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">To</label>
+                    <input type="datetime-local" name="to" value="{{ to_date }}" class="form-input">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Apply Filters
+                </button>
+                <a href="{% url 'admin_panel:activity_log_report' %}" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Clear Filters
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Activity Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Activities</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_activities }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Unique Users</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ unique_users }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Actions Today</p>
+            <p class="text-2xl font-bold text-green-600">{{ today_count }}</p>
+        </div>
+        <div class="glass-card p-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Peak Hour</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ peak_hour }}</p>
+        </div>
+    </div>
+
+    <!-- Activity Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Activity by Hour -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Activity by Hour</h2>
+            <div class="h-80" id="hourlyChart"></div>
+        </div>
+
+        <!-- Activity by Category -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Activity by Category</h2>
+            <div class="h-80" id="categoryChart"></div>
+        </div>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Activity Timeline</h2>
+        
+        <div class="relative">
+            <!-- Timeline Line -->
+            <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+            
+            <!-- Timeline Events -->
+            <div class="space-y-6">
+                {% for activity in activities %}
+                <div class="relative pl-20">
+                    <!-- Timeline Dot -->
+                    <div class="absolute left-6 w-4 h-4 rounded-full 
+                        {% if activity.category == 'USER' %}bg-blue-500
+                        {% elif activity.category == 'ADMIN' %}bg-purple-500
+                        {% elif activity.category == 'ELECTION' %}bg-green-500
+                        {% elif activity.category == 'VOTING' %}bg-indigo-500
+                        {% elif activity.category == 'KYC' %}bg-yellow-500
+                        {% elif activity.category == 'SECURITY' %}bg-red-500
+                        {% else %}bg-gray-500{% endif %} 
+                        transform -translate-x-1/2" style="left: 8px;">
+                    </div>
+                    
+                    <!-- Activity Card -->
+                    <div class="glass-card p-4 hover:shadow-lg transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.user.full_name|default:'System' }}</span>
+                                    <span class="text-xs px-2 py-1 rounded-full 
+                                        {% if activity.category == 'USER' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400
+                                        {% elif activity.category == 'ADMIN' %}bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400
+                                        {% elif activity.category == 'ELECTION' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                                        {% elif activity.category == 'VOTING' %}bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400
+                                        {% elif activity.category == 'KYC' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400
+                                        {% elif activity.category == 'SECURITY' %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400
+                                        {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+                                        {{ activity.get_category_display }}
+                                    </span>
+                                </div>
+                                <p class="text-gray-700 dark:text-gray-300">{{ activity.action }}</p>
+                                {% if activity.details %}
+                                <pre class="mt-2 text-xs bg-gray-50 dark:bg-gray-800 p-2 rounded-lg overflow-x-auto">{{ activity.details|pprint }}</pre>
+                                {% endif %}
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ activity.timestamp|date:"M j, Y H:i:s" }}</p>
+                                <p class="text-xs text-gray-400">{{ activity.timestamp|timesince }} ago</p>
+                                {% if activity.ip_address %}
+                                <p class="text-xs text-gray-400 mt-1">IP: {{ activity.ip_address }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-12">
+                    <i class="fas fa-history fa-4x text-gray-400 mb-4"></i>
+                    <p class="text-gray-500 dark:text-gray-400">No activity logs found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-8">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if range %}&range={{ range }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if range %}&range={{ range }}{% endif %}{% if user_filter %}&user={{ user_filter }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Top Users Table -->
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Most Active Users</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">User</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">User Type</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Total Actions</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Last Active</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Common Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in top_users %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-xs text-gray-600 dark:text-gray-400"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ user.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ user.user_type }}</td>
+                        <td class="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">{{ user.action_count }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ user.last_active|timesince }} ago</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ user.common_action }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-4 text-center text-gray-500 dark:text-gray-400">No user activity data</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+function toggleCustomRange(select) {
+    const customRange = document.getElementById('customRange');
+    if (select.value === 'custom') {
+        customRange.classList.remove('hidden');
+    } else {
+        customRange.classList.add('hidden');
+    }
+}
+
+// Hourly Activity Chart
+const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+new Chart(hourlyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ hourly_labels|safe }},
+        datasets: [{
+            label: 'Activities',
+            data: {{ hourly_data|safe }},
+            borderColor: '#111827',
+            backgroundColor: 'rgba(17, 24, 39, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Category Chart
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ category_labels|safe }},
+        datasets: [{
+            data: {{ category_data|safe }},
+            backgroundColor: [
+                '#3B82F6',
+                '#8B5CF6',
+                '#10B981',
+                '#6366F1',
+                '#F59E0B',
+                '#EF4444',
+                '#6B7280'
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+function exportReport(format) {
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = `/admin-panel/reports/export/activity-log/?format=${format}&${params.toString()}`;
+}
+
+// Print styles
+const style = document.createElement('style');
+style.innerHTML = `
+    @media print {
+        .admin-sidebar, .admin-nav-link, .btn, footer, .no-print, form {
+            display: none !important;
+        }
+        .admin-content {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+        .glass-card {
+            border: 1px solid #ddd !important;
+            background: white !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+        .absolute {
+            position: relative !important;
+        }
+        .pl-20 {
+            padding-left: 1rem !important;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

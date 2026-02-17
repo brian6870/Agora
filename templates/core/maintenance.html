@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mode - Agora</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-lg w-full text-center">
+            <div class="w-24 h-24 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-tools text-4xl text-yellow-400"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-4">Under Maintenance</h1>
+            <p class="text-gray-400 mb-6">{{ message }}</p>
+            
+            {% if estimated_end %}
+            <div class="glass-card p-4 mb-6">
+                <p class="text-sm text-gray-400">Estimated completion:</p>
+                <p class="text-lg font-semibold text-white">{{ estimated_end|date:"F j, Y H:i" }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="text-sm text-gray-500">
+                <p>We'll be back shortly. Thank you for your patience.</p>
+                <p class="mt-4">- Agora Team</p>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!-- templates/errors/404.html -->
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found - Agora{% endblock %}
+
+{% block content %}
+<div style="min-height: 70vh; display: flex; align-items: center; justify-content: center;">
+    <div style="text-align: center;">
+        <h1 style="font-size: 4rem; margin-bottom: 16px;">404</h1>
+        <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 32px;">
+            The page you're looking for doesn't exist.
+        </p>
+        <a href="{% url 'landing' %}" class="btn btn-primary">
+            Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

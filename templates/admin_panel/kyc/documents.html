@@ -1,0 +1,217 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}KYC Documents - {{ voter.full_name }} - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <a href="{% url 'admin_panel:pending_kyc' %}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Pending KYC
+        </a>
+    </div>
+
+    <div class="glass-card p-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">KYC Documents</h1>
+                <p class="text-gray-600 dark:text-gray-400">Review identity documents for {{ voter.full_name }}</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="openVerifyModal()" class="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition">
+                    <i class="fas fa-check mr-2"></i>Verify
+                </button>
+                <button onclick="openRejectModal()" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                    <i class="fas fa-times mr-2"></i>Reject
+                </button>
+            </div>
+        </div>
+
+        <!-- Document Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- ID Front -->
+            <div class="space-y-2">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">ID Front</h3>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                    {% if voter.id_front %}
+                    <img src="{{ voter.id_front.url }}" alt="ID Front" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('{{ voter.id_front.url }}')">
+                    {% else %}
+                    <div class="h-64 flex items-center justify-center text-gray-400">
+                        <i class="fas fa-image fa-4x"></i>
+                        <p class="mt-2">Not uploaded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ID Back -->
+            <div class="space-y-2">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">ID Back</h3>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                    {% if voter.id_back %}
+                    <img src="{{ voter.id_back.url }}" alt="ID Back" class="w-full rounded-lg cursor-pointer" onclick="openImageModal('{{ voter.id_back.url }}')">
+                    {% else %}
+                    <div class="h-64 flex items-center justify-center text-gray-400">
+                        <i class="fas fa-image fa-4x"></i>
+                        <p class="mt-2">Not uploaded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Face Photo -->
+            <div class="md:col-span-2 space-y-2">
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Face Photo / Selfie</h3>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                    {% if voter.face_photo %}
+                    <img src="{{ voter.face_photo.url }}" alt="Face Photo" class="max-h-96 mx-auto rounded-lg cursor-pointer" onclick="openImageModal('{{ voter.face_photo.url }}')">
+                    {% else %}
+                    <div class="h-64 flex items-center justify-center text-gray-400">
+                        <i class="fas fa-user fa-4x"></i>
+                        <p class="mt-2">Not uploaded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Notes -->
+        <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Verification Notes</label>
+            <textarea class="form-textarea w-full" rows="4" placeholder="Add notes about document verification..."></textarea>
+        </div>
+
+        <!-- Document Info -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Upload Date</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.kyc_submitted_at|date:"M j, Y" }}</p>
+            </div>
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <p class="text-xs text-gray-500 dark:text-gray-400">File Size (ID Front)</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.id_front.size|filesizeformat }}</p>
+            </div>
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <p class="text-xs text-gray-500 dark:text-gray-400">File Size (Face)</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ voter.face_photo.size|filesizeformat }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="relative">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white hover:text-gray-300">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            <img id="modalImage" src="" alt="Document" class="max-h-[90vh] max-w-[90vw] rounded-lg">
+        </div>
+    </div>
+</div>
+
+<!-- Verify Modal -->
+<div id="verifyModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Verify KYC Documents</h3>
+            <form method="post" action="{% url 'admin_panel:verify_kyc' voter.id %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Please confirm that all documents are valid and match the voter's information.</p>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="confirm" id="confirm" class="checkbox" required>
+                        <label for="confirm" class="ml-2 text-sm text-gray-700 dark:text-gray-300">I have verified all documents</label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeVerifyModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition">
+                        Verify Documents
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Reject KYC Documents</h3>
+            <form method="post" action="{% url 'admin_panel:reject_kyc' voter.id %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Rejection</label>
+                    <select name="reason" class="form-select mb-3" required>
+                        <option value="">Select a reason</option>
+                        <option value="Blurry or unclear images">Blurry or unclear images</option>
+                        <option value="ID document expired">ID document expired</option>
+                        <option value="Information mismatch">Information mismatch</option>
+                        <option value="Face photo doesn't match ID">Face photo doesn't match ID</option>
+                        <option value="Suspected forgery">Suspected forgery</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <textarea name="custom_reason" class="form-textarea" rows="3" placeholder="Additional details (optional)"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeRejectModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                        Reject Documents
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openImageModal(imageUrl) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+}
+
+function openVerifyModal() {
+    document.getElementById('verifyModal').classList.remove('hidden');
+}
+
+function closeVerifyModal() {
+    document.getElementById('verifyModal').classList.add('hidden');
+}
+
+function openRejectModal() {
+    document.getElementById('rejectModal').classList.remove('hidden');
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectModal').classList.add('hidden');
+}
+
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('imageModal')) closeImageModal();
+    if (e.target === document.getElementById('verifyModal')) closeVerifyModal();
+    if (e.target === document.getElementById('rejectModal')) closeRejectModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+        closeVerifyModal();
+        closeRejectModal();
+    }
+});
+</script>
+{% endblock %}

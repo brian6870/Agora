@@ -1,0 +1,186 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Administrators - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Administrators</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage system administrators</p>
+        </div>
+        
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-4">
+        <form method="get" class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" name="search" value="{{ search }}" class="form-input" placeholder="Search by name, email, or admin ID...">
+            </div>
+            <div class="w-40">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="ACTIVE" {% if status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                    <option value="SUSPENDED" {% if status == 'SUSPENDED' %}selected{% endif %}>Suspended</option>
+                    <option value="PENDING" {% if status == 'PENDING' %}selected{% endif %}>Pending</option>
+                </select>
+            </div>
+            <div class="w-40">
+                <select name="role" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="ADMIN" {% if role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                    <option value="SUPER_ADMIN" {% if role == 'SUPER_ADMIN' %}selected{% endif %}>Super Admin</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                Apply Filters
+            </button>
+        </form>
+    </div>
+
+    <!-- Admins Table -->
+    <div class="glass-card p-6">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Admin</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Admin ID</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Email</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Role</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Created</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-shield text-xs text-gray-600 dark:text-gray-400"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ admin.admin_id|default:'Not assigned' }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ admin.email }}</td>
+                        <td class="py-3 px-4">
+                            {% if admin.user_type == 'SUPER_ADMIN' %}
+                            <span class="px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 rounded-full text-xs">Super Admin</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 rounded-full text-xs">Admin</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if admin.account_status == 'ACTIVE' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Active</span>
+                            {% elif admin.account_status == 'SUSPENDED' %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs">Suspended</span>
+                            {% elif admin.account_status == 'PENDING' %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full text-xs">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ admin.registered_at|date:"M j, Y" }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'admin_panel:admin_detail' admin.id %}" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="View">
+                                    <i class="fas fa-eye text-gray-600 dark:text-gray-400"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:edit_admin_permissions' admin.id %}" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Permissions">
+                                    <i class="fas fa-key text-gray-600 dark:text-gray-400"></i>
+                                </a>
+                                {% if admin.user_type != 'SUPER_ADMIN' %}
+                                <button onclick="openSuspendModal({{ admin.id }})" class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Suspend">
+                                    <i class="fas fa-ban text-yellow-600 dark:text-yellow-400"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-user-shield fa-3x mb-3 opacity-50"></i>
+                            <p>No administrators found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Suspend Modal -->
+<div id="suspendModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Suspend Administrator</h3>
+            <form method="post" action="" id="suspendForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Suspension</label>
+                    <textarea name="reason" class="form-textarea" rows="3" required placeholder="Enter reason for suspension..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeSuspendModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-full text-sm font-medium hover:bg-yellow-700 transition">
+                        Suspend Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openSuspendModal(adminId) {
+    const form = document.getElementById('suspendForm');
+    form.action = `/admin-panel/admins/${adminId}/suspend/`;
+    document.getElementById('suspendModal').classList.remove('hidden');
+}
+
+function closeSuspendModal() {
+    document.getElementById('suspendModal').classList.add('hidden');
+}
+
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('suspendModal')) closeSuspendModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeSuspendModal();
+});
+</script>
+{% endblock %}

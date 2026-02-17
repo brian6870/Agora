@@ -1,0 +1,457 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Super Admin Dashboard - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header Section - Following Landing Page Style -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+            Super Admin Dashboard
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            System-wide management • Administrator oversight • Election configuration
+        </p>
+        <!-- Subtle accent line -->
+        <div class="w-24 h-1 bg-gray-300 dark:bg-gray-700 mx-auto mt-6 rounded-full"></div>
+    </div>
+
+    <!-- Statistics Cards Grid - Glass Cards with Better Spacing -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Users Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_users|default:"0" }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-users text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Voters</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ total_voters|default:"0" }}</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span class="text-gray-500 dark:text-gray-400">Admins</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ total_admins|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Approvals Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Pending Approvals</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ pending_approvals|default:"0" }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-clock text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Admin Approvals</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ pending_admins|default:"0" }}</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span class="text-gray-500 dark:text-gray-400">KYC Pending</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ pending_kyc|default:"0" }}</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span class="text-gray-500 dark:text-gray-400">Candidate Apps</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ pending_candidate_applications|default:"0" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Elections Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Elections</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ active_elections|default:"0" }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-vote-yea text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Total Elections</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ total_elections|default:"0" }}</span>
+                </div>
+                <!-- Progress bar for turnout -->
+                <div class="mt-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Voter Turnout</span>
+                    <div class="mt-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gray-900 dark:bg-white rounded-full" style="width: {{ voter_turnout|default:'0' }}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suspended Accounts Card -->
+        <div class="glass-card p-6 hover:border-white/50 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Suspended</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ suspended_count|default:"0" }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i class="fas fa-ban text-gray-600 dark:text-gray-400"></i>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/30 dark:border-white/10">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Deletion Requests</span>
+                    <span class="font-medium text-gray-900 dark:text-white">{{ deletion_requests|default:"0" }}</span>
+                </div>
+                {% if deletion_requests > 0 %}
+                <a href="{% url 'admin_panel:voter_deletion_requests' %}" class="mt-2 inline-flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                    Review requests
+                    <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Grid - Three Column Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Admin Management Card -->
+        <div class="glass-card p-8 hover:border-white/50 transition-all duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-shield text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Admin Management</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Manage administrator accounts and permissions</p>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'admin_panel:pending_admin_approvals' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Pending Approvals</span>
+                        {% if pending_admins > 0 %}
+                        <span class="px-2 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs font-medium">{{ pending_admins }}</span>
+                        {% else %}
+                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:admin_list' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">All Administrators</span>
+                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:admin_detail' request.user.id %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">My Profile</span>
+                        <i class="fas fa-user-circle text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Election Management Card -->
+        <div class="glass-card p-8 hover:border-white/50 transition-all duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-alt text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Election Management</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Configure elections, candidates, and settings</p>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'admin_panel:election_list' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">All Elections</span>
+                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:election_create' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Create Election</span>
+                        <i class="fas fa-plus-circle text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Management Card -->
+        <div class="glass-card p-8 hover:border-white/50 transition-all duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-2xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Account Management</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Monitor and manage user accounts</p>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'admin_panel:voter_list' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">All Voters</span>
+                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:suspended_voters' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Suspended Accounts</span>
+                        {% if suspended_count > 0 %}
+                        <span class="px-2 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs font-medium">{{ suspended_count }}</span>
+                        {% else %}
+                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:voter_deletion_requests' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Deletion Requests</span>
+                        {% if deletion_requests > 0 %}
+                        <span class="px-2 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs font-medium">{{ deletion_requests }}</span>
+                        {% else %}
+                        <i class="fas fa-chevron-right text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:device_reset_requests' %}" 
+                       class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Device Reset Requests</span>
+                        <i class="fas fa-mobile-alt text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Admin Approvals Table - Enhanced Design -->
+    {% if pending_admins_list %}
+    <div class="glass-card p-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Pending Admin Approvals</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Review and approve new administrator registrations</p>
+            </div>
+            <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium">
+                {{ pending_admins_list|length }} Pending
+            </span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/30 dark:border-white/10">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Name</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Email</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">ID Number</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Requested</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in pending_admins_list %}
+                    <tr class="border-b border-white/10 dark:border-white/5 hover:bg-white/5 transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-shield text-xs text-gray-600 dark:text-gray-400"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ admin.email }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ admin.id_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ admin.registered_at|date:"M j, Y" }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'admin_panel:approve_admin' admin.id %}" 
+                                   class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-xs hover:bg-gray-800 dark:hover:bg-gray-100 transition-all">
+                                    Approve
+                                </a>
+                                <a href="{% url 'admin_panel:reject_admin' admin.id %}" 
+                                   class="px-3 py-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                                    Reject
+                                </a>
+                                <a href="{% url 'admin_panel:admin_detail' admin.id %}" 
+                                   class="px-3 py-1 bg-transparent text-gray-600 dark:text-gray-400 rounded-full text-xs hover:text-gray-900 dark:hover:text-white transition-all">
+                                    View
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- System Health & Recent Activity - Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- System Health Card -->
+        <div class="glass-card p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">System Health</h3>
+                <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs font-medium">Operational</span>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Database Status -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                            <i class="fas fa-database text-gray-600 dark:text-gray-400"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Database</span>
+                    </div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Connected</span>
+                </div>
+                
+                <!-- Cache Status -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                            <i class="fas fa-bolt text-gray-600 dark:text-gray-400"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Cache</span>
+                    </div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">98% hit rate</span>
+                </div>
+                
+                <!-- Storage Status -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                            <i class="fas fa-hdd text-gray-600 dark:text-gray-400"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Storage</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">45% used</span>
+                    </div>
+                </div>
+                
+                <!-- Worker Status -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                            <i class="fas fa-tasks text-gray-600 dark:text-gray-400"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Background Workers</span>
+                    </div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">4/4 running</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="glass-card p-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Recent Activity</h3>
+            
+            <div class="space-y-4">
+                {% for activity in recent_activity %}
+                <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <i class="fas {% if activity.type == 'approval' %}fa-check-circle{% elif activity.type == 'suspension' %}fa-ban{% elif activity.type == 'candidate_approval' %}fa-user-check{% else %}fa-cog{% endif %} text-gray-600 dark:text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.description }}</p>
+                        <div class="flex items-center justify-between mt-1">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ activity.timestamp|timesince }} ago</p>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ activity.user }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <i class="fas fa-history text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if recent_activity %}
+            <div class="mt-6 text-center">
+                <a href="{% url 'admin_panel:audit_logs' %}" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                    View all activity
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Stats Footer -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_users|default:"0" }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Total Users</p>
+        </div>
+        <div class="text-center">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_admins|default:"0" }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Administrators</p>
+        </div>
+        <div class="text-center">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ active_elections|default:"0" }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Active Elections</p>
+        </div>
+        <div class="text-center">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ pending_approvals|default:"0" }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Pending Actions</p>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hero Text Effect - From Landing Page */
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+/* Glass Card Hover Effect */
+.glass-card {
+    transition: all 300ms;
+}
+
+.glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Row Hover */
+tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Custom Scrollbar (Optional) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+</style>
+{% endblock %}

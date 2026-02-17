@@ -1,0 +1,876 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+<style>
+    /* Admin Panel Specific Styles - Following UI Specifications */
+    :root {
+        --sidebar-width: 280px;
+        --sidebar-collapsed-width: 80px;
+        --navbar-height: 80px;
+        --transition-speed: 0.3s;
+    }
+
+    /* Glass Card Effect */
+    .glass-card {
+        background: transparent;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all var(--transition-speed) ease;
+    }
+
+    .dark .glass-card {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-card:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Admin Sidebar */
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--sidebar-width);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        z-index: 100;
+        overflow-y: auto;
+        transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .dark .admin-sidebar {
+        background: rgba(17, 18, 19, 0.95);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    .admin-sidebar.collapsed .sidebar-logo span,
+    .admin-sidebar.collapsed .admin-nav-link span,
+    .admin-sidebar.collapsed .admin-badge,
+    .admin-sidebar.collapsed .nav-section-title,
+    .admin-sidebar.collapsed .count-badge {
+        display: none;
+    }
+
+    .admin-sidebar.collapsed .admin-nav-link {
+        justify-content: center;
+        padding: 1rem 0;
+    }
+
+    .admin-sidebar.collapsed .admin-nav-link i {
+        margin-right: 0;
+        width: auto;
+        font-size: 1.25rem;
+    }
+
+    .admin-sidebar.collapsed .sidebar-footer .user-details,
+    .admin-sidebar.collapsed .sidebar-footer span {
+        display: none;
+    }
+
+    .admin-sidebar.collapsed .sidebar-footer .user-avatar {
+        margin: 0 auto;
+    }
+
+    .admin-content {
+        margin-left: var(--sidebar-width);
+        min-height: 100vh;
+        padding: 2rem;
+        transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .admin-content.expanded {
+        margin-left: var(--sidebar-collapsed-width);
+    }
+
+    @media (max-width: 768px) {
+        .admin-sidebar {
+            transform: translateX(-100%);
+        }
+        .admin-sidebar.open {
+            transform: translateX(0);
+        }
+        .admin-content,
+        .admin-content.expanded {
+            margin-left: 0;
+        }
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: var(--navbar-height);
+    }
+
+    .dark .sidebar-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        text-decoration: none;
+        letter-spacing: -0.02em;
+    }
+
+    .dark .sidebar-logo {
+        color: white;
+    }
+
+    /* Collapse Button */
+    .collapse-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(107, 114, 128, 0.1);
+        border: none;
+        color: #6B7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .collapse-btn:hover {
+        background: rgba(107, 114, 128, 0.2);
+        color: #111827;
+    }
+
+    .dark .collapse-btn:hover {
+        color: white;
+    }
+
+    /* Navigation Links - FIXED HOVER EFFECTS */
+    .admin-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: #4B5563;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dark .admin-nav-link {
+        color: #9CA3AF;
+    }
+
+    .admin-nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 100%;
+        background: rgba(107, 114, 128, 0.05);
+        transition: width 0.2s ease;
+        z-index: -1;
+    }
+
+    .admin-nav-link:hover::before {
+        width: 100%;
+    }
+
+    .admin-nav-link:hover {
+        color: #111827;
+    }
+
+    .dark .admin-nav-link:hover {
+        color: white;
+    }
+
+    .admin-nav-link.active {
+        background-color: rgba(107, 114, 128, 0.05);
+        color: #111827;
+        border-left-color: #9CA3AF;
+    }
+
+    .dark .admin-nav-link.active {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: white;
+        border-left-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .admin-nav-link i {
+        width: 1.5rem;
+        margin-right: 0.75rem;
+        font-size: 1rem;
+        transition: transform 0.2s ease;
+    }
+
+    .admin-nav-link:hover i {
+        transform: scale(1.1);
+    }
+
+    /* Section Titles */
+    .nav-section-title {
+        padding: 1.2rem 1.5rem 0.25rem 1.5rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #9CA3AF;
+    }
+
+    .nav-divider {
+        margin: 0.5rem 1.5rem;
+        border-top: 1px solid rgba(107, 114, 128, 0.2);
+    }
+
+    /* Badges */
+    .admin-badge {
+        display: inline-block;
+        padding: 0.25rem 1rem;
+        background: rgba(107, 114, 128, 0.1);
+        border: 1px solid rgba(107, 114, 128, 0.3);
+        border-radius: 9999px;
+        color: #6B7280;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .count-badge {
+        background: rgba(107, 114, 128, 0.2);
+        color: #4B5563;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.15rem 0.4rem;
+        border-radius: 9999px;
+        margin-left: auto;
+        transition: transform 0.2s ease;
+    }
+
+    .admin-nav-link:hover .count-badge {
+        transform: scale(1.05);
+    }
+
+    .dark .count-badge {
+        background: rgba(255, 255, 255, 0.1);
+        color: #9CA3AF;
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 2rem;
+    }
+
+    .dark .sidebar-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(107, 114, 128, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6B7280;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .user-avatar:hover {
+        transform: scale(1.05);
+        background: rgba(107, 114, 128, 0.2);
+    }
+
+    .dark .user-avatar {
+        background: rgba(255, 255, 255, 0.1);
+        color: #9CA3AF;
+    }
+
+    .dark .user-avatar:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .user-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .dark .user-name {
+        color: white;
+    }
+
+    .user-role {
+        font-size: 0.7rem;
+        color: #6B7280;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dark .user-role {
+        color: #9CA3AF;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .role-badge.super-admin {
+        background: #8B5CF6;
+        color: white;
+    }
+
+    .role-badge.admin {
+        background: #3B82F6;
+        color: white;
+    }
+
+    /* Theme Toggle Button - FIXED */
+    .theme-toggle-btn {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        color: #4B5563;
+        background: rgba(107, 114, 128, 0.1);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .theme-toggle-btn:hover {
+        background: rgba(107, 114, 128, 0.2);
+        color: #111827;
+    }
+
+    .dark .theme-toggle-btn {
+        color: #9CA3AF;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .dark .theme-toggle-btn:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .theme-toggle-btn i {
+        width: 1.5rem;
+        margin-right: 0.75rem;
+        font-size: 1rem;
+    }
+
+    /* Utility Classes */
+    .hidden {
+        display: none !important;
+    }
+
+    /* Reports section - organized as separate links */
+    .reports-links {
+        margin-left: 0;
+    }
+    
+    .report-link {
+        display: flex;
+        align-items: center;
+        padding: 0.6rem 1.5rem 0.6rem 3.75rem;
+        color: #6B7280;
+        font-size: 0.8rem;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .report-link:hover {
+        background-color: rgba(107, 114, 128, 0.05);
+        color: #111827;
+    }
+    
+    .dark .report-link:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+    
+    .report-link i {
+        width: 1.25rem;
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Set current section for active link detection -->
+{% with request.resolver_match.url_name as current_url %}
+{% with request.path as current_path %}
+
+<!-- Admin Sidebar -->
+<aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-header">
+        <a href="{% url 'admin_panel:dashboard' %}" class="sidebar-logo">
+            <span>AGORA</span>
+        </a>
+        <button class="collapse-btn" id="collapseSidebar" onclick="toggleSidebar()" aria-label="Toggle sidebar" type="button">
+            <i class="fas fa-chevron-left" id="collapseIcon"></i>
+        </button>
+    </div>
+    
+    <div class="py-6">
+        <div class="px-6 mb-6">
+            <span class="admin-badge">
+                {% if user.user_type == 'SUPER_ADMIN' %}
+                    SUPER ADMIN
+                {% else %}
+                    ADMIN
+                {% endif %}
+            </span>
+        </div>
+        
+        <nav class="space-y-1">
+            <!-- ========== 1. DASHBOARD SECTION ========== -->
+            <div class="nav-section-title">DASHBOARD</div>
+            
+            <!-- Dashboard -->
+            <a href="{% url 'admin_panel:dashboard' %}" class="admin-nav-link {% if current_url == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <!-- Super Admin Dashboard (super admin only) -->
+            {% if user.user_type == 'SUPER_ADMIN' %}
+            <a href="{% url 'admin_panel:superuser_dashboard' %}" class="admin-nav-link {% if current_url == 'superuser_dashboard' %}active{% endif %}">
+                <i class="fas fa-crown"></i>
+                <span>Super Admin Dashboard</span>
+            </a>
+            {% endif %}
+            
+            <div class="nav-divider"></div>
+            
+            <!-- ========== 2. ELECTION MANAGEMENT SECTION ========== -->
+            <div class="nav-section-title">ELECTION MANAGEMENT</div>
+
+            <!-- All Elections - FIXED: Only active when on election_list, not on create -->
+            <a href="{% url 'admin_panel:election_list' %}" class="admin-nav-link {% if current_url == 'election_list' %}active{% endif %}">
+                <i class="fas fa-vote-yea"></i>
+                <span>All Elections</span>
+            </a>
+
+            <!-- Create Election (super admin only) -->
+            {% if user.user_type == 'SUPER_ADMIN' %}
+            <a href="{% url 'admin_panel:election_create' %}" class="admin-nav-link {% if current_url == 'election_create' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>Create Election</span>
+            </a>
+            {% endif %}
+
+            <!-- All Positions -->
+            <a href="{% url 'admin_panel:all_positions' %}" class="admin-nav-link {% if current_url == 'all_positions' %}active{% endif %}">
+                <i class="fas fa-list-ol"></i>
+                <span>All Positions</span>
+            </a>
+
+            <!-- Create Position -->
+            <a href="{% url 'admin_panel:position_create' %}" class="admin-nav-link {% if current_url == 'position_create' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>Create Position</span>
+            </a>
+
+            <!-- All Candidates -->
+            <a href="{% url 'admin_panel:candidate_list' %}" class="admin-nav-link {% if current_url == 'candidate_list' %}active{% endif %}">
+                <i class="fas fa-user-tie"></i>
+                <span>Candidates</span>
+            </a>
+
+            <!-- All Teams -->
+            <a href="{% url 'admin_panel:team_list' %}" class="admin-nav-link {% if current_url == 'team_list' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Teams</span>
+            </a>
+
+            <!-- Candidate Applications -->
+            <a href="{% url 'admin_panel:candidate_applications' %}" class="admin-nav-link {% if current_url == 'candidate_applications' %}active{% endif %}">
+                <i class="fas fa-file-signature"></i>
+                <span>Candidate Apps</span>
+                <span class="count-badge" id="candidateAppCount">0</span>
+            </a>
+
+            <!-- Team Applications -->
+            <a href="{% url 'admin_panel:team_applications' %}" class="admin-nav-link {% if current_url == 'team_applications' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Team Apps</span>
+                <span class="count-badge" id="teamAppCount">0</span>
+            </a>
+            
+            <!-- ========== 3. VOTER MANAGEMENT SECTION ========== -->
+            <div class="nav-section-title">VOTER MANAGEMENT</div>
+            
+            <!-- All Voters -->
+            <a href="{% url 'admin_panel:voter_list' %}" class="admin-nav-link {% if current_url == 'voter_list' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>All Voters</span>
+            </a>
+            
+            <!-- Suspended Voters -->
+            <a href="{% url 'admin_panel:suspended_voters' %}" class="admin-nav-link {% if current_url == 'suspended_voters' %}active{% endif %}">
+                <i class="fas fa-ban"></i>
+                <span>Suspended Voters</span>
+            </a>
+            
+            <!-- Deletion Requests -->
+            <a href="{% url 'admin_panel:voter_deletion_requests' %}" class="admin-nav-link {% if current_url == 'voter_deletion_requests' %}active{% endif %}">
+                <i class="fas fa-trash-alt"></i>
+                <span>Deletion Requests</span>
+                <span class="count-badge" id="deletionCount">0</span>
+            </a>
+            
+            <!-- Pending KYC -->
+            <a href="{% url 'admin_panel:pending_kyc' %}" class="admin-nav-link {% if current_url == 'pending_kyc' %}active{% endif %}">
+                <i class="fas fa-id-card"></i>
+                <span>Pending KYC</span>
+                <span class="count-badge" id="kycCount">0</span>
+            </a>
+            
+            <!-- Pending TSC -->
+            <a href="{% url 'admin_panel:pending_tsc' %}" class="admin-nav-link {% if current_url == 'pending_tsc' %}active{% endif %}">
+                <i class="fas fa-school"></i>
+                <span>Pending TSC</span>
+                <span class="count-badge" id="tscCount">0</span>
+            </a>
+            
+            <!-- Device Resets -->
+            <a href="{% url 'admin_panel:device_reset_requests' %}" class="admin-nav-link {% if current_url == 'device_reset_requests' %}active{% endif %}">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Device Resets</span>
+                <span class="count-badge" id="resetCount">0</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            
+            <!-- ========== 4. ADMIN MANAGEMENT SECTION (SUPER ADMIN ONLY) ========== -->
+            {% if user.user_type == 'SUPER_ADMIN' %}
+            <div class="nav-section-title">ADMIN MANAGEMENT</div>
+            
+            <!-- All Admins -->
+            <a href="{% url 'admin_panel:admin_list' %}" class="admin-nav-link {% if current_url == 'admin_list' %}active{% endif %}">
+                <i class="fas fa-user-shield"></i>
+                <span>All Admins</span>
+            </a>
+            
+            <!-- Pending Approvals -->
+            <a href="{% url 'admin_panel:pending_admin_approvals' %}" class="admin-nav-link {% if current_url == 'pending_admin_approvals' %}active{% endif %}">
+                <i class="fas fa-clock"></i>
+                <span>Pending Approvals</span>
+                <span class="count-badge" id="adminPendingCount">0</span>
+            </a>
+            
+            <div class="nav-divider"></div>
+            {% endif %}
+            
+            <!-- ========== 5. REPORTS SECTION (NO DROPDOWN) ========== -->
+            <div class="nav-section-title">REPORTS</div>
+            
+            <!-- Reports as separate links -->
+            <a href="{% url 'admin_panel:voter_turnout_report' %}" class="admin-nav-link {% if current_url == 'voter_turnout_report' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-chart-pie"></i>
+                <span>Voter Turnout</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:kyc_status_report' %}" class="admin-nav-link {% if current_url == 'kyc_status_report' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-id-card"></i>
+                <span>KYC Status</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:vote_counts_report' %}" class="admin-nav-link {% if current_url == 'vote_counts_report' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-vote-yea"></i>
+                <span>Vote Counts</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:activity_log_report' %}" class="admin-nav-link {% if current_url == 'activity_log_report' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-history"></i>
+                <span>Activity Log</span>
+            </a>
+            
+            {% if user.user_type == 'SUPER_ADMIN' %}
+            <a href="{% url 'admin_panel:audit_logs' %}" class="admin-nav-link {% if current_url == 'audit_logs' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-file-alt"></i>
+                <span>Audit Logs</span>
+            </a>
+            {% endif %}
+            
+            <div class="nav-divider"></div>
+            
+            <!-- ========== 6. SYSTEM SECTION (NO DROPDOWN) ========== -->
+            <div class="nav-section-title">SYSTEM</div>
+            
+            <!-- Notifications -->
+            <a href="{% url 'admin_panel:admin_notifications' %}" class="admin-nav-link {% if current_url == 'admin_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+                <span class="count-badge" id="notificationBadge">0</span>
+            </a>
+            
+            <!-- Settings as separate links -->
+            <a href="{% url 'admin_panel:general_settings' %}" class="admin-nav-link {% if current_url == 'general_settings' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-sliders-h"></i>
+                <span>General</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:security_settings' %}" class="admin-nav-link {% if current_url == 'security_settings' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:email_settings' %}" class="admin-nav-link {% if current_url == 'email_settings' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-envelope"></i>
+                <span>Email</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:backup_settings' %}" class="admin-nav-link {% if current_url == 'backup_settings' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-database"></i>
+                <span>Backup Settings</span>
+            </a>
+            
+            <a href="{% url 'admin_panel:maintenance_mode' %}" class="admin-nav-link {% if current_url == 'maintenance_mode' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-tools"></i>
+                <span>Maintenance</span>
+            </a>
+            
+            <!-- Single Backups link (consolidated) -->
+            <a href="{% url 'admin_panel:backup_list' %}" class="admin-nav-link {% if current_url == 'backup_list' %}active{% endif %}" style="padding-left: 1.5rem;">
+                <i class="fas fa-hdd"></i>
+                <span>Backup Manager</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <div class="user-info mb-4">
+            <div class="user-avatar">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="user-details">
+                <div class="user-name">
+                    {{ user.full_name|truncatechars:20 }}
+                    {% if user.user_type == 'SUPER_ADMIN' %}
+                        <span class="role-badge super-admin">SUPER</span>
+                    {% else %}
+                        <span class="role-badge admin">ADMIN</span>
+                    {% endif %}
+                </div>
+                <div class="user-role">{{ user.email|truncatechars:25 }}</div>
+            </div>
+        </div>
+        
+        <!-- Theme Toggle - FIXED: Direct toggle without theme.js dependency -->
+        <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" onclick="toggleTheme()">
+            <i class="fas fa-moon" id="moon-icon"></i>
+            <i class="fas fa-sun hidden" id="sun-icon"></i>
+            <span>Switch Theme</span>
+        </button>
+        
+        <!-- Voter Portal Link -->
+        <a href="{% url 'core:dashboard' %}" class="admin-nav-link mt-4" style="padding-left: 0;">
+            <i class="fas fa-home"></i>
+            <span>Voter Portal</span>
+        </a>
+        
+        <!-- Logout Form -->
+        <form method="post" action="{% url 'accounts:logout' %}" class="mt-2">
+            {% csrf_token %}
+            <button type="submit" class="admin-nav-link w-full text-left" style="padding-left: 0;" aria-label="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- Mobile Menu Button -->
+<button class="md:hidden fixed top-20 left-4 z-[101] p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg" onclick="toggleMobileSidebar()" type="button" aria-label="Toggle mobile menu">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Main Content -->
+<div class="admin-content" id="adminContent">
+    {% block admin_content %}{% endblock %}
+</div>
+
+<script>
+// Sidebar state
+let sidebarCollapsed = localStorage.getItem('adminSidebar') === 'collapsed';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sidebar
+    const sidebar = document.getElementById('adminSidebar');
+    const content = document.getElementById('adminContent');
+    const icon = document.getElementById('collapseIcon');
+    
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        content.classList.add('expanded');
+        if (icon) icon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+    }
+    
+    // Initialize theme
+    initTheme();
+    
+    // Load counts
+    loadCounts();
+    setInterval(loadCounts, 30000);
+});
+
+// ==================== THEME FUNCTIONS - FIXED ====================
+function initTheme() {
+    const theme = localStorage.getItem('theme') || 'light';
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        if (moonIcon) moonIcon.classList.add('hidden');
+        if (sunIcon) sunIcon.classList.remove('hidden');
+    } else {
+        document.documentElement.classList.remove('dark');
+        if (moonIcon) moonIcon.classList.remove('hidden');
+        if (sunIcon) sunIcon.classList.add('hidden');
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    if (isDark) {
+        localStorage.setItem('theme', 'dark');
+        if (moonIcon) moonIcon.classList.add('hidden');
+        if (sunIcon) sunIcon.classList.remove('hidden');
+    } else {
+        localStorage.setItem('theme', 'light');
+        if (moonIcon) moonIcon.classList.remove('hidden');
+        if (sunIcon) sunIcon.classList.add('hidden');
+    }
+}
+
+// ==================== SIDEBAR FUNCTIONS ====================
+function toggleSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const content = document.getElementById('adminContent');
+    const icon = document.getElementById('collapseIcon');
+    
+    sidebar.classList.toggle('collapsed');
+    content.classList.toggle('expanded');
+    
+    if (sidebar.classList.contains('collapsed')) {
+        icon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+        localStorage.setItem('adminSidebar', 'collapsed');
+    } else {
+        icon.classList.replace('fa-chevron-right', 'fa-chevron-left');
+        localStorage.setItem('adminSidebar', 'expanded');
+    }
+}
+
+function toggleMobileSidebar() {
+    document.getElementById('adminSidebar').classList.toggle('open');
+}
+
+// ==================== COUNT FUNCTIONS ====================
+function updateBadge(url, elementId, key = 'pending') {
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data[key] !== undefined && data[key] !== null) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = data[key];
+                }
+            }
+        })
+        .catch(err => console.log(`Error loading ${elementId}:`, err));
+}
+
+function loadCounts() {
+    updateBadge('{% url "admin_panel:unread_notifications_count" %}', 'notificationBadge', 'count');
+    updateBadge('{% url "admin_panel:kyc_stats" %}', 'kycCount', 'pending');
+    updateBadge('{% url "admin_panel:tsc_stats" %}', 'tscCount', 'pending');
+    updateBadge('/admin-panel/api/deletion-requests/count/', 'deletionCount', 'pending');
+    updateBadge('{% url "admin_panel:device_reset_stats" %}', 'resetCount', 'pending');
+    updateBadge('/admin-panel/api/candidate-applications/count/', 'candidateAppCount', 'pending');
+    updateBadge('/admin-panel/api/team-applications/count/', 'teamAppCount', 'pending');
+
+    {% if user.user_type == 'SUPER_ADMIN' %}
+    updateBadge('/admin-panel/api/admin-pending-count/', 'adminPendingCount', 'pending');
+    {% endif %}
+}
+
+// ==================== HELPER FUNCTIONS ====================
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+{% endwith %}
+{% endwith %}
+{% endblock %}

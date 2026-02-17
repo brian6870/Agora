@@ -1,0 +1,150 @@
+<!-- templates/admin_panel/voters/list.html -->
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block admin_title %}Manage Voters{% endblock %}
+
+{% block admin_actions %}
+<a href="{% url 'admin_panel:export_voters' %}" class="btn btn-secondary">Export CSV</a>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Summary Stats -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; font-weight: 600;">{{ total_voters }}</div>
+        <div style="color: var(--text-secondary);">Total Voters</div>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; font-weight: 600;">{{ verified_count }}</div>
+        <div style="color: var(--text-secondary);">Verified</div>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; font-weight: 600;">{{ voted_count }}</div>
+        <div style="color: var(--text-secondary);">Has Voted</div>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; font-weight: 600;">{{ pending_count }}</div>
+        <div style="color: var(--text-secondary);">Pending KYC</div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <form method="get" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.9rem;">Search</label>
+            <input type="text" name="search" value="{{ search }}" placeholder="Name, TSC, ID, School...">
+        </div>
+        <div style="width: 150px;">
+            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.9rem;">KYC Status</label>
+            <select name="kyc_status">
+                <option value="">All</option>
+                {% for code, label in kyc_statuses %}
+                <option value="{{ code }}" {% if selected_kyc == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="width: 150px;">
+            <label style="display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 0.9rem;">Voted</label>
+            <select name="voted">
+                <option value="">All</option>
+                <option value="yes" {% if selected_voted == 'yes' %}selected{% endif %}>Has Voted</option>
+                <option value="no" {% if selected_voted == 'no' %}selected{% endif %}>Not Voted</option>
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="{% url 'admin_panel:voter_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+<!-- Voters Table -->
+<div class="card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>TSC No.</th>
+                <th>ID No.</th>
+                <th>School</th>
+                <th>County</th>
+                <th>KYC Status</th>
+                <th>Voted</th>
+                <th>Registered</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for voter in voters %}
+            <tr>
+                <td>{{ voter.full_name }}</td>
+                <td>{{ voter.tsc_number }}</td>
+                <td>{{ voter.id_number }}</td>
+                <td>{{ voter.school|truncatechars:20 }}</td>
+                <td>{{ voter.county }}</td>
+                <td>
+                    <span class="status-badge {% if voter.kyc_status == 'VERIFIED' %}success{% elif voter.kyc_status == 'PENDING' %}warning{% elif voter.kyc_status == 'REJECTED' %}error{% endif %}">
+                        {{ voter.get_kyc_status_display }}
+                    </span>
+                </td>
+                <td>
+                    {% if voter.has_voted %}
+                    <span class="status-badge success">Yes</span>
+                    {% else %}
+                    <span class="status-badge">No</span>
+                    {% endif %}
+                </td>
+                <td>{{ voter.registered_at|date:"Y-m-d" }}</td>
+                <td>
+                    <button onclick="viewVoter({{ voter.id }})" class="btn btn-secondary" style="padding: 4px 8px;">View</button>
+                    {% if voter.kyc_status == 'PENDING' %}
+                    <button onclick="verifyKYC({{ voter.id }})" class="btn btn-success" style="padding: 4px 8px;">Verify</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 48px;">
+                    <p style="color: var(--text-secondary);">No voters found.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div style="display: flex; justify-content: center; gap: 8px; padding: 20px; border-top: 1px solid var(--border-color);">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_kyc %}&kyc_status={{ selected_kyc }}{% endif %}{% if selected_voted %}&voted={{ selected_voted }}{% endif %}" class="btn btn-secondary">←</a>
+        {% endif %}
+        
+        <span style="padding: 8px 16px;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_kyc %}&kyc_status={{ selected_kyc }}{% endif %}{% if selected_voted %}&voted={{ selected_voted }}{% endif %}" class="btn btn-secondary">→</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function viewVoter(voterId) {
+    window.location.href = `/admin-panel/voters/${voterId}/`;
+}
+
+function verifyKYC(voterId) {
+    if (confirm('Verify KYC for this voter?')) {
+        fetch(`/admin-panel/voters/${voterId}/verify/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=verify'
+        }).then(() => location.reload());
+    }
+}
+</script>
+{% endblock %}

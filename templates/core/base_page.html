@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Star Background */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    /* Light mode stars - black */
+    .light .star {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Dark mode stars - white */
+    .dark .star {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes twinkle {
+        0%, 100% {
+            opacity: 0.2;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+    
+    /* Page Content Styles */
+    .page-content {
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .dark .page-content {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-content:hover {
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Section Styles */
+    .section-title {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 2px;
+        background: currentColor;
+        opacity: 0.3;
+        transition: width 0.3s ease;
+    }
+    
+    .section-title:hover::after {
+        width: 100px;
+    }
+    
+    /* List Styles */
+    .custom-list {
+        list-style: none;
+        padding-left: 0;
+    }
+    
+    .custom-list li {
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 12px;
+    }
+    
+    .custom-list li::before {
+        content: '•';
+        position: absolute;
+        left: 8px;
+        color: currentColor;
+        opacity: 0.5;
+        font-size: 1.2em;
+    }
+    
+    /* Scroll container - matches navbar width and centering */
+    .scroll-container {
+        position: fixed;
+        top: 80px; /* Height of navbar + spacer */
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        background: transparent;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* Inner container with same max-width as navbar */
+    .scroll-inner {
+        width: 100%;
+        max-width: 80rem; /* 7xl = 80rem */
+        margin: 0 auto;
+        padding: 0 1.5rem; /* Match navbar horizontal padding */
+        background: transparent;
+    }
+    
+    /* Content wrapper */
+    .scroll-content {
+        width: 100%;
+        padding: 1rem 0 2rem 0;
+    }
+    
+    /* Hide scrollbar for cleaner look (optional) */
+    .scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: rgba(128, 128, 128, 0.3);
+        border-radius: 3px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(128, 128, 128, 0.5);
+    }
+    
+    /* Ensure footer has proper spacing */
+    footer {
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Tiny Stars Background -->
+<div class="stars-container" id="stars"></div>
+
+<!-- Scrollable Content Container - matches navbar width -->
+<div class="scroll-container">
+    <div class="scroll-inner">
+        <div class="scroll-content">
+            <!-- Page Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+                    {{ page_title }}
+                </h1>
+                <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    {{ page_description }}
+                </p>
+            </div>
+            
+            <!-- Page Content -->
+            <div class="page-content backdrop-blur-xl bg-transparent rounded-3xl p-8 md:p-12 mb-8">
+                {% block page_content %}{% endblock %}
+            </div>
+            
+            <!-- Footer -->
+            {% include 'includes/footer.html' %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Create tiny floating stars
+function createStars() {
+    const starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
+    
+    starsContainer.innerHTML = '';
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', createStars);
+document.addEventListener('themeChanged', createStars);
+</script>
+{% endblock %}

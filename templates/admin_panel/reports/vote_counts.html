@@ -1,0 +1,345 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Vote Counts Report - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Vote Counts Report</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Detailed vote counts by position and candidate</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="exportReport('pdf')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+            </button>
+            <button onclick="exportReport('csv')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-file-csv mr-2"></i>Export CSV
+            </button>
+            <button onclick="printReport()" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-print mr-2"></i>Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Votes Cast</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_votes }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Valid Votes</p>
+            <p class="text-3xl font-bold text-green-600">{{ valid_votes }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Invalid/Blank</p>
+            <p class="text-3xl font-bold text-red-600">{{ invalid_votes }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Voter Turnout</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ turnout }}%</p>
+        </div>
+    </div>
+
+    <!-- Results by Position -->
+    <div class="space-y-8 mb-8">
+        {% for position in positions %}
+        <div class="glass-card p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ position.name }}</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Votes: {{ position.total_votes }}</p>
+                </div>
+                {% if position.winner %}
+                <div class="px-4 py-2 bg-green-100 dark:bg-green-900/20 rounded-full">
+                    <span class="text-sm font-medium text-green-700 dark:text-green-400">
+                        <i class="fas fa-crown mr-2"></i>{{ position.winner.full_name }} Wins
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Vote Distribution Chart -->
+            <div class="h-64 mb-6" id="chart-{{ position.id }}"></div>
+
+            <!-- Candidates Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200 dark:border-gray-700">
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Candidate</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Team</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Votes</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Percentage</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidate in position.candidates %}
+                        <tr class="border-b border-gray-100 dark:border-gray-800 {% if forloop.first %}bg-green-50 dark:bg-green-900/10{% endif %}">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    {% if forloop.first %}
+                                    <i class="fas fa-crown text-yellow-500 mr-2"></i>
+                                    {% endif %}
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ candidate.full_name }}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ candidate.team.name }}</td>
+                            <td class="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">{{ candidate.votes }}</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white mr-3">{{ candidate.percentage }}%</span>
+                                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                        <div class="bg-gray-900 dark:bg-white h-2 rounded-full" style="width: {{ candidate.percentage }}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                                {% if not forloop.first %}
+                                -{{ candidate.margin }} votes
+                                {% else %}
+                                Leader
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Position Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Vote Difference</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ position.vote_difference }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Winning Margin</p>
+                    <p class="text-lg font-bold text-green-600">{{ position.winning_margin }}%</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Total Candidates</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ position.candidates|length }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Overall Statistics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Votes by County -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Votes by County</h2>
+            <div class="h-80" id="countyChart"></div>
+        </div>
+
+        <!-- Vote Distribution Over Time -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Vote Distribution Over Time</h2>
+            <div class="h-80" id="timelineChart"></div>
+        </div>
+    </div>
+
+    <!-- Vote Validity Summary -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Vote Validity Summary</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Valid Votes</span>
+                    <span class="text-lg font-bold text-green-600">{{ valid_votes }}</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div class="bg-green-600 h-2 rounded-full" style="width: {{ valid_percentage }}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">{{ valid_percentage }}% of total</p>
+            </div>
+            
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Blank Votes</span>
+                    <span class="text-lg font-bold text-yellow-600">{{ blank_votes }}</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div class="bg-yellow-600 h-2 rounded-full" style="width: {{ blank_percentage }}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">{{ blank_percentage }}% of total</p>
+            </div>
+            
+            <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Invalid Votes</span>
+                    <span class="text-lg font-bold text-red-600">{{ invalid_votes }}</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div class="bg-red-600 h-2 rounded-full" style="width: {{ invalid_percentage }}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">{{ invalid_percentage }}% of total</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Initialize charts for each position
+{% for position in positions %}
+const ctx{{ position.id }} = document.getElementById('chart-{{ position.id }}').getContext('2d');
+new Chart(ctx{{ position.id }}, {
+    type: 'bar',
+    data: {
+        labels: [{% for candidate in position.candidates %}'{{ candidate.full_name }}',{% endfor %}],
+        datasets: [{
+            label: 'Votes',
+            data: [{% for candidate in position.candidates %}{{ candidate.votes }},{% endfor %}],
+            backgroundColor: [
+                {% for candidate in position.candidates %}
+                '{% if forloop.first %}rgba(16, 185, 129, 0.8){% else %}rgba(17, 24, 39, 0.6){% endif %}',
+                {% endfor %}
+            ],
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+{% endfor %}
+
+// County Chart
+const countyCtx = document.getElementById('countyChart').getContext('2d');
+new Chart(countyCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ county_labels|safe }},
+        datasets: [{
+            label: 'Votes',
+            data: {{ county_data|safe }},
+            backgroundColor: '#111827',
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            y: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Timeline Chart
+const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+new Chart(timelineCtx, {
+    type: 'line',
+    data: {
+        labels: {{ timeline_labels|safe }},
+        datasets: [{
+            label: 'Votes per Hour',
+            data: {{ timeline_data|safe }},
+            borderColor: '#111827',
+            backgroundColor: 'rgba(17, 24, 39, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+function exportReport(format) {
+    window.location.href = `/admin-panel/reports/export/vote-counts/?format=${format}`;
+}
+
+function printReport() {
+    window.print();
+}
+
+// Print styles
+const style = document.createElement('style');
+style.innerHTML = `
+    @media print {
+        .admin-sidebar, .admin-nav-link, .btn, footer, .no-print {
+            display: none !important;
+        }
+        .admin-content {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+        .glass-card {
+            border: 1px solid #ddd !important;
+            background: white !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+        canvas {
+            max-height: 300px !important;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

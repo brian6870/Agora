@@ -1,0 +1,327 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Team Applications - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 hero-text">
+            Team Applications
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Review and approve team creation requests from voters
+        </p>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-6">
+        <div class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <select id="electionFilter" class="form-select w-full" onchange="filterByElection(this.value)">
+                    <option value="all">All Elections</option>
+                    {% for election in elections %}
+                    <option value="{{ election.id }}" {% if selected_election == election.id %}selected{% endif %}>
+                        {{ election.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex space-x-2">
+                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                    Total: {{ total_applications }}
+                </span>
+                <span class="px-4 py-2 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full text-sm">
+                    Pending: {{ pending_count }}
+                </span>
+                <span class="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-sm">
+                    Approved: {{ approved_count }}
+                </span>
+                <span class="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-sm">
+                    Rejected: {{ rejected_count }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications Grid -->
+    <div class="space-y-6" id="applicationsList">
+        {% for application in applications %}
+        <div class="application-card glass-card p-6 hover:border-white/50 transition-all duration-300"
+             data-election="{{ application.election.id }}">
+            
+            <!-- Application Header -->
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                <div class="flex items-start space-x-4">
+                    <!-- Team Logo -->
+                    <div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {% if application.logo %}
+                        <img src="{{ application.logo.url }}" alt="{{ application.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <i class="fas fa-users text-2xl text-gray-500 dark:text-gray-400"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Team Info -->
+                    <div>
+                        <div class="flex items-center flex-wrap gap-2">
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{{ application.name }}</h3>
+                            {% if application.acronym %}
+                            <span class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                                {{ application.acronym }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Created by {{ application.created_by.full_name }}
+                        </p>
+                        <div class="flex items-center space-x-3 mt-2">
+                            <span class="text-xs text-gray-500">
+                                <i class="fas fa-calendar mr-1"></i>{{ application.created_at|date:"M j, Y" }}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                <i class="fas fa-globe mr-1"></i>{{ application.election.name }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Badge -->
+                <span class="status-badge px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                    {% if application.status == 'PENDING' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400
+                    {% elif application.status == 'APPROVED' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                    {% else %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400{% endif %}">
+                    {{ application.get_status_display }}
+                </span>
+            </div>
+
+            <!-- Team Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Color Preview -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Team Color</p>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full mr-3" style="background-color: {{ application.color_code }}"></div>
+                        <span class="text-sm font-mono text-gray-700 dark:text-gray-300">{{ application.color_code }}</span>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Description</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ application.description|default:"No description provided" }}</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons - SIMPLIFIED: Direct forms with confirm dialogs -->
+            {% if application.status == 'PENDING' %}
+            <div class="flex justify-end space-x-3 pt-4 border-t border-white/30 dark:border-white/10">
+                <!-- Approve Form - Direct -->
+                <form method="post" action="{% url 'admin_panel:approve_team_application' application.id %}" class="inline" onsubmit="return confirm('Are you sure you want to approve this team?')">
+                    {% csrf_token %}
+                    <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition">
+                        <i class="fas fa-check mr-2"></i>
+                        Approve
+                    </button>
+                </form>
+                
+                <!-- Reject Form - Direct with reason prompt -->
+                <form method="post" action="{% url 'admin_panel:reject_team_application' application.id %}" class="inline" onsubmit="return promptReason()">
+                    {% csrf_token %}
+                    <input type="hidden" name="reason" id="reason_{{ application.id }}" value="">
+                    <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                        <i class="fas fa-times mr-2"></i>
+                        Reject
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Review Info -->
+            {% if application.reviewed_at %}
+            <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-xs text-gray-500 dark:text-gray-400">
+                <i class="fas fa-check-circle mr-1"></i>
+                Reviewed by {{ application.reviewed_by.full_name }} on {{ application.reviewed_at|date:"M j, Y H:i" }}
+                {% if application.rejection_reason %}
+                <p class="mt-1 text-red-600 dark:text-red-400">Reason: {{ application.rejection_reason }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="glass-card p-12 text-center">
+            <i class="fas fa-users fa-4x text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-900 dark:text-white mb-2">No Applications Found</h3>
+            <p class="text-gray-600 dark:text-gray-400">There are no team applications to review.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="flex justify-center mt-8">
+        <nav class="flex space-x-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if election %}&election={{ election }}{% endif %}" 
+               class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                Previous
+            </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if election %}&election={{ election }}{% endif %}" 
+               class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-700 transition">
+                Next
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notification Toast Container -->
+<div id="notificationContainer" class="fixed top-24 right-4 z-50 space-y-2 w-80"></div>
+
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification-toast {
+    animation: slideIn 0.3s ease-out;
+}
+</style>
+
+<script>
+function filterByElection(electionId) {
+    const url = new URL(window.location.href);
+    if (electionId === 'all') {
+        url.searchParams.delete('election');
+    } else {
+        url.searchParams.set('election', electionId);
+    }
+    window.location.href = url.toString();
+}
+
+function promptReason() {
+    const reason = prompt('Please enter the reason for rejection:');
+    if (reason === null) {
+        return false; // User cancelled
+    }
+    if (reason.trim() === '') {
+        alert('Rejection reason is required');
+        return false;
+    }
+    
+    // Find the hidden input in the current form
+    const form = event.target;
+    const hiddenInput = form.querySelector('input[name="reason"]');
+    if (hiddenInput) {
+        hiddenInput.value = reason;
+    }
+    
+    // Show processing notification
+    showNotification('Processing rejection...', 'info');
+    return true;
+}
+
+// Handle form submissions with AJAX for smoother experience
+document.addEventListener('DOMContentLoaded', function() {
+    // Add AJAX handling to all forms
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            // Skip if it's the filter form
+            if (this.id === 'filterForm') return;
+            
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const action = this.action;
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button ? button.innerHTML : '';
+            
+            // Show loading state
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            }
+            
+            try {
+                const response = await fetch(action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showNotification(data.message || 'Action completed successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.error || 'An error occurred', 'error');
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Network error. Please try again.', 'error');
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            }
+        });
+    });
+});
+
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notificationContainer');
+    const notification = document.createElement('div');
+    
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    
+    notification.className = `glass-card p-4 border-l-4 ${bgColor} notification-toast`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${icon} text-white mr-3"></i>
+            <p class="text-sm text-white">${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,490 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Manage Teams - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header Section with Hero Text Effect -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 hero-text">
+                Manage Teams
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400">
+                View and manage political teams and alliances
+            </p>
+        </div>
+        <!-- Teams are created via applications only -->
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Teams</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_teams }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Active Teams</p>
+            <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ active_count|default:'0' }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Candidates</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_candidates|default:'0' }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    {% if elections %}
+    <div class="glass-card p-6">
+        <form method="get" class="flex flex-wrap gap-4 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <select name="election" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Elections</option>
+                    {% for election in elections %}
+                    <option value="{{ election.id }}" {% if selected_election == election.id|stringformat:"s" %}selected{% endif %}>
+                        {{ election.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <input type="text" 
+                       name="search" 
+                       value="{{ search }}" 
+                       class="form-input" 
+                       placeholder="Search teams...">
+            </div>
+            <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-search mr-2"></i>Filter
+            </button>
+            <a href="{% url 'admin_panel:team_list' %}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                Clear
+            </a>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Teams List - Table Style -->
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/30 dark:border-white/10 bg-gray-50/50 dark:bg-gray-800/50">
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Team</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Election</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Details</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Candidates</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr class="border-b border-white/10 dark:border-white/5 hover:bg-white/5 transition-colors">
+                        <!-- Team Info -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center">
+                                <!-- Team Logo/Icon -->
+                                <div class="flex-shrink-0 mr-4">
+                                    {% if team.logo %}
+                                    <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-white/30 dark:border-white/10">
+                                        <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="w-full h-full object-cover">
+                                    </div>
+                                    {% else %}
+                                    <div class="w-12 h-12 rounded-xl border-2 border-white/30 dark:border-white/10 flex items-center justify-center" 
+                                         style="background-color: {{ team.color_code }}20;">
+                                        <i class="fas fa-users text-xl" style="color: {{ team.color_code }};"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Team Name and Acronym -->
+                                <div>
+                                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ team.name }}</h3>
+                                    {% if team.acronym %}
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ team.acronym }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Election -->
+                        <td class="py-4 px-6">
+                            {% if team.election %}
+                            <a href="{% url 'admin_panel:election_detail' team.election.id %}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                {{ team.election.name }}
+                            </a>
+                            {% else %}
+                            <span class="text-sm text-gray-500">-</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Team Details -->
+                        <td class="py-4 px-6">
+                            <div class="space-y-1">
+                                <!-- Color Indicator -->
+                                <div class="flex items-center">
+                                    <span class="w-4 h-4 rounded-full mr-2" style="background-color: {{ team.color_code }};"></span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{ team.color_code }}</span>
+                                </div>
+                                {% if team.description %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{{ team.description|truncatechars:60 }}</p>
+                                {% endif %}
+                                <!-- Created By -->
+                                {% if team.created_by %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Created by: {{ team.created_by.full_name }}
+                                </p>
+                                {% endif %}
+                                <!-- Created At -->
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ team.created_at|date:"M d, Y" }}
+                                </p>
+                            </div>
+                        </td>
+
+                        <!-- Candidates Count -->
+                        <td class="py-4 px-6">
+                            <span class="text-lg font-bold text-gray-900 dark:text-white">{{ team.candidates.count }}</span>
+                        </td>
+
+                        <!-- Status -->
+                        <td class="py-4 px-6">
+                            {% if team.status == 'APPROVED' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-600 mr-1.5"></span>
+                                Approved
+                            </span>
+                            {% elif team.status == 'PENDING' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
+                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-600 mr-1.5"></span>
+                                Pending
+                            </span>
+                            {% elif team.status == 'REJECTED' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-600 mr-1.5"></span>
+                                Rejected
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-500 mr-1.5"></span>
+                                {{ team.status|default:'Inactive' }}
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions - REMOVED EDIT BUTTON, KEPT ONLY RELEVANT ACTIONS -->
+                        <td class="py-4 px-6">
+                            <div class="flex items-center space-x-2">
+                                <!-- View Details - Shows team info (no edit) -->
+                                <button onclick="viewTeamDetails({{ team.id }})" 
+                                        class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all group"
+                                        title="View Team Details">
+                                    <i class="fas fa-eye text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                                </button>
+                                
+                                <!-- Toggle Active Status (only for approved teams) -->
+                                {% if team.status == 'APPROVED' %}
+                                <button onclick="toggleTeamStatus({{ team.id }})" 
+                                        class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all group"
+                                        title="{% if team.is_active %}Deactivate{% else %}Activate{% endif %} Team">
+                                    <i class="fas {% if team.is_active %}fa-toggle-on{% else %}fa-toggle-off{% endif %} text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <!-- View Application (for pending teams) -->
+                                {% if team.status == 'PENDING' %}
+                                <a href="{% url 'admin_panel:team_applications' %}?id={{ team.id }}" 
+                                   class="p-2 bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-all group"
+                                   title="View Application">
+                                    <i class="fas fa-file-signature"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-16 px-6 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                                    <i class="fas fa-users text-3xl text-gray-400"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No teams found</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Teams are created through applications from voters</p>
+                                <a href="{% url 'admin_panel:team_applications' %}" 
+                                   class="inline-flex items-center px-6 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:-translate-y-1 transition-all duration-300">
+                                    <i class="fas fa-file-signature mr-2"></i>
+                                    View Pending Applications
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex items-center justify-between px-6 py-4 border-t border-white/30 dark:border-white/10">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </p>
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_election %}&election={{ selected_election }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+                   class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all group">
+                    <i class="fas fa-chevron-left text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                </a>
+                {% endif %}
+                
+                <span class="w-10 h-10 rounded-full bg-gray-900 text-white dark:bg-white dark:text-gray-900 flex items-center justify-center text-sm font-medium">
+                    {{ page_obj.number }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_election %}&election={{ selected_election }}{% endif %}{% if search %}&search={{ search }}{% endif %}" 
+                   class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all group">
+                    <i class="fas fa-chevron-right text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links Card -->
+    <div class="glass-card p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Team Applications</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Review and manage pending team applications</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'admin_panel:team_applications' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-clipboard-list mr-2"></i>
+                    View Applications
+                </a>
+                <button onclick="exportTeamsToCSV()" 
+                        class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                    <i class="fas fa-download mr-2"></i>
+                    Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Details Modal -->
+<div id="teamDetailsModal" class="fixed inset-0 z-[9999] hidden">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeTeamDetailsModal()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass-card p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Team Details</h3>
+                <button onclick="closeTeamDetailsModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="teamDetailsContent" class="space-y-6">
+                <!-- Content loaded dynamically -->
+                <div class="flex justify-center py-8">
+                    <div class="w-10 h-10 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hero Text Effect Styles -->
+<style>
+.hero-text {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(0deg);
+    transition: transform 0.3s ease;
+}
+
+.hero-text:hover {
+    transform: perspective(1000px) rotateX(2deg) translateZ(20px) scale(1.05);
+}
+
+/* Table row hover */
+tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Line clamp for description */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+
+<script>
+function exportTeamsToCSV() {
+    const teams = [
+        {% for team in teams %}
+        {
+            name: "{{ team.name|escapejs }}",
+            acronym: "{{ team.acronym|escapejs }}",
+            color: "{{ team.color_code|escapejs }}",
+            election: "{{ team.election.name|escapejs }}",
+            candidates: {{ team.candidates.count }},
+            status: "{{ team.get_status_display|escapejs }}",
+            active: "{% if team.is_active %}Yes{% else %}No{% endif %}",
+            created_by: "{{ team.created_by.full_name|escapejs }}",
+            created_at: "{{ team.created_at|date:'Y-m-d'|escapejs }}",
+            description: "{{ team.description|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    let csv = "Name,Acronym,Color,Election,Candidates,Status,Active,Created By,Created Date,Description\n";
+    teams.forEach(team => {
+        csv += `"${team.name}","${team.acronym || ''}","${team.color}","${team.election || ''}",${team.candidates},"${team.status}","${team.active}","${team.created_by || ''}","${team.created_at || ''}","${team.description || ''}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'teams_export.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function toggleTeamStatus(teamId) {
+    if (confirm('Are you sure you want to toggle this team\'s active status?')) {
+        fetch(`/admin-panel/teams/${teamId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error toggling team status');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred');
+        });
+    }
+}
+
+function viewTeamDetails(teamId) {
+    const modal = document.getElementById('teamDetailsModal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Fetch team details
+    fetch(`/admin-panel/teams/${teamId}/details/`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('teamDetailsContent');
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-4 overflow-hidden">
+                            ${data.logo ? `<img src="${data.logo}" class="w-full h-full object-cover">` : '<i class="fas fa-users text-3xl text-gray-500"></i>'}
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-gray-900 dark:text-white">${data.name}</h4>
+                            <p class="text-sm text-gray-500">${data.acronym || ''}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <p class="text-xs text-gray-500">Color</p>
+                            <div class="flex items-center mt-2">
+                                <div class="w-6 h-6 rounded-full mr-2" style="background-color: ${data.color_code}"></div>
+                                <span class="text-sm font-mono">${data.color_code}</span>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <p class="text-xs text-gray-500">Created By</p>
+                            <p class="text-sm font-medium mt-2">${data.created_by}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-2">Description</p>
+                        <p class="text-sm">${data.description || 'No description provided'}</p>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-2">Election</p>
+                        <p class="text-sm font-medium">${data.election}</p>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-2">Status</p>
+                        <p class="text-sm font-medium">${data.status}</p>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-2">Submitted</p>
+                        <p class="text-sm">${new Date(data.created_at).toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('teamDetailsContent').innerHTML = `
+                <div class="text-center py-8 text-red-600">
+                    <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                    <p>Error loading team details</p>
+                </div>
+            `;
+        });
+}
+
+function closeTeamDetailsModal() {
+    document.getElementById('teamDetailsModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Filter form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const electionSelect = document.querySelector('select[name="election"]');
+    if (electionSelect) {
+        electionSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+});
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeTeamDetailsModal();
+    }
+});
+</script>
+{% endblock %}

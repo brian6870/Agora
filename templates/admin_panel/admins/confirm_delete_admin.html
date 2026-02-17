@@ -1,0 +1,158 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete Administrator - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-2xl mx-auto">
+    <div class="glass-card p-8">
+        <div class="text-center mb-6">
+            <div class="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl text-red-600 dark:text-red-400"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Delete Administrator Account</h1>
+            <p class="text-gray-600 dark:text-gray-400">This action cannot be undone</p>
+        </div>
+
+        <!-- Admin Info -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Administrator Information</h3>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Full Name</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.full_name }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Admin ID</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.admin_id }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.email }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Role</span>
+                    <span class="text-sm font-medium">
+                        {% if admin.user_type == 'SUPER_ADMIN' %}
+                        <span class="text-purple-600">Super Administrator</span>
+                        {% else %}
+                        <span class="text-blue-600">Administrator</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Status</span>
+                    <span class="text-sm font-medium">
+                        {% if admin.is_active %}
+                        <span class="text-green-600">Active</span>
+                        {% else %}
+                        <span class="text-red-600">Inactive</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Created</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.date_joined|date:"M j, Y" }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Last Login</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.last_login|timesince|default:'Never' }} ago</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deletion Consequences -->
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-6 mb-6">
+            <h4 class="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-3">This will permanently delete:</h4>
+            <ul class="space-y-2 text-sm text-yellow-600 dark:text-yellow-300">
+                <li class="flex items-start">
+                    <i class="fas fa-times mr-2 mt-1"></i>
+                    <span>Administrator account and all associated data</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-times mr-2 mt-1"></i>
+                    <span>Admin profile and verification documents</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-times mr-2 mt-1"></i>
+                    <span>All activity logs and audit trail for this admin</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-times mr-2 mt-1"></i>
+                    <span>Assigned permissions and roles</span>
+                </li>
+            </ul>
+        </div>
+
+        {% if admin.user_type == 'SUPER_ADMIN' %}
+        <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 mb-6">
+            <p class="text-sm text-red-700 dark:text-red-400">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>Warning:</strong> This is a Super Administrator account. Deleting it may affect system operations.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Confirmation Form -->
+        <form method="post" id="deleteForm">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Deletion</label>
+                <select name="reason" class="form-select mb-3" required>
+                    <option value="">Select a reason</option>
+                    <option value="Account no longer needed">Account no longer needed</option>
+                    <option value="Security concern">Security concern</option>
+                    <option value="Policy violation">Policy violation</option>
+                    <option value="Duplicate account">Duplicate account</option>
+                    <option value="User request">User request</option>
+                    <option value="Other">Other</option>
+                </select>
+                <textarea name="custom_reason" class="form-textarea" rows="2" placeholder="Additional details (optional)"></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" name="confirm" class="checkbox" required>
+                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        I understand that this action is permanent and cannot be undone
+                    </span>
+                </label>
+            </div>
+
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" name="confirm_audit" class="checkbox" required>
+                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        I confirm that this deletion has been properly authorized
+                    </span>
+                </label>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'admin_panel:admin_detail' admin.id %}" class="px-6 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                    Permanently Delete Admin
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Custom reason field toggle
+document.querySelector('select[name="reason"]').addEventListener('change', function() {
+    const customReason = document.querySelector('textarea[name="custom_reason"]');
+    if (this.value === 'Other') {
+        customReason.required = true;
+        customReason.parentElement.classList.remove('hidden');
+    } else {
+        customReason.required = false;
+        customReason.parentElement.classList.add('hidden');
+    }
+});
+</script>
+{% endblock %}

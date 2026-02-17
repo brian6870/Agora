@@ -1,0 +1,53 @@
+{% extends 'core/base_page.html' %}
+
+{% block page_content %}
+<div class="space-y-8">
+    <div class="text-center mb-12">
+        <span class="inline-block px-4 py-2 rounded-full bg-white/10 dark:bg-white/5 backdrop-blur-sm text-sm text-gray-700 dark:text-gray-300 mb-4">
+            
+        </span>
+    </div>
+    
+    <div class="prose prose-lg max-w-none text-gray-700 dark:text-gray-300">
+        <p class="lead">
+            At Agora, we take your privacy seriously. This policy describes how we collect, use, and protect your personal information.
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Information We Collect</h3>
+        <ul class="custom-list">
+            <li><strong class="text-gray-900 dark:text-white">Personal Information:</strong> Name, TSC number, ID number, email, phone number, school, county</li>
+            <li><strong class="text-gray-900 dark:text-white">KYC Documents:</strong> ID card images, face photos for verification</li>
+            <li><strong class="text-gray-900 dark:text-white">Device Information:</strong> Device fingerprint, IP address, browser type</li>
+            <li><strong class="text-gray-900 dark:text-white">Voting Data:</strong> Vote records (anonymized for audit)</li>
+        </ul>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">How We Use Your Information</h3>
+        <ul class="custom-list">
+            <li>Verify your identity for voting eligibility</li>
+            <li>Ensure one person, one vote through device binding</li>
+            <li>Process and record votes securely</li>
+            <li>Communicate important election information</li>
+            <li>Maintain audit trails for election integrity</li>
+        </ul>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Data Protection</h3>
+        <p>
+            Your data is encrypted both in transit and at rest. We implement strict access controls and regular security audits. KYC documents are stored securely and access is limited to authorized personnel only.
+        </p>
+        
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">Your Rights</h3>
+        <ul class="custom-list">
+            <li>Access your personal data</li>
+            <li>Request corrections to your data</li>
+            <li>Request data deletion (subject to election record retention requirements)</li>
+            <li>Opt out of non-essential communications</li>
+        </ul>
+        
+        <div class="mt-8 p-6 backdrop-blur-sm bg-transparent border border-white/30 dark:border-white/20 rounded-2xl">
+            <p class="text-sm">
+                For privacy-related inquiries, contact our Data Protection Officer at <a href="mailto:privacy@agora.ke" class="text-gray-900 dark:text-white hover:underline">privacy@agora.ke</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

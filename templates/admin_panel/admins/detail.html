@@ -1,0 +1,287 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Admin Details - {{ admin.full_name }} - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-6">
+        <a href="{% url 'admin_panel:admin_list' %}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Administrators
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Profile Card -->
+        <div class="glass-card p-6 lg:col-span-1">
+            <div class="text-center">
+                <div class="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-shield text-4xl text-gray-600 dark:text-gray-400"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ admin.full_name }}</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ admin.admin_id }}</p>
+                
+                <div class="mt-4">
+                    {% if admin.user_type == 'SUPER_ADMIN' %}
+                    <span class="px-3 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 rounded-full text-xs">Super Admin</span>
+                    {% else %}
+                    <span class="px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 rounded-full text-xs">Administrator</span>
+                    {% endif %}
+                    
+                    {% if admin.account_status == 'ACTIVE' %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs ml-2">Active</span>
+                    {% elif admin.account_status == 'SUSPENDED' %}
+                    <span class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs ml-2">Suspended</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-6 space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Email</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.email }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">ID Number</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.id_number }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">County</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.county }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Phone</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.phone_number|default:'Not provided' }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Created</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.registered_at|date:"M j, Y" }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Last Login</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.last_login|timesince|default:'Never' }} ago</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Assigned By</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.assigned_by.full_name|default:'System' }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Assigned At</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ admin.assigned_at|date:"M j, Y"|default:'N/A' }}</span>
+                </div>
+            </div>
+
+            <div class="mt-6 space-y-2">
+                <a href="{% url 'admin_panel:edit_admin_permissions' admin.id %}" class="w-full block text-center px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    <i class="fas fa-key mr-2"></i>Edit Permissions
+                </a>
+                
+                {% if admin.user_type != 'SUPER_ADMIN' %}
+                    {% if admin.account_status == 'ACTIVE' %}
+                    <button onclick="openSuspendModal({{ admin.id }})" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-full text-sm font-medium hover:bg-yellow-700 transition">
+                        <i class="fas fa-ban mr-2"></i>Suspend Admin
+                    </button>
+                    {% else %}
+                    <form method="post" action="{% url 'admin_panel:activate_admin' admin.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition">
+                            <i class="fas fa-check mr-2"></i>Activate Admin
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <button onclick="openDeleteModal({{ admin.id }})" class="w-full px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                        <i class="fas fa-trash mr-2"></i>Delete Admin
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Activity & Permissions Card -->
+        <div class="glass-card p-6 lg:col-span-2">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Admin Permissions</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Manage Elections</span>
+                        {% if admin.can_manage_elections %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Allowed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Restricted</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Manage Candidates</span>
+                        {% if admin.can_manage_candidates %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Allowed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Restricted</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Verify KYC</span>
+                        {% if admin.can_verify_kyc %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Allowed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Restricted</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Verify TSC</span>
+                        {% if admin.can_verify_tsc %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Allowed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Restricted</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Suspend Accounts</span>
+                        {% if admin.can_suspend_accounts %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Allowed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Restricted</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Delete Accounts</span>
+                        {% if admin.can_delete_accounts %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs">Allowed</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">Restricted</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
+            <div class="space-y-4">
+                {% for activity in recent_activity %}
+                <div class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <i class="fas {% if activity.action == 'login' %}fa-sign-in-alt{% elif activity.action == 'verify' %}fa-check{% else %}fa-cog{% endif %} text-gray-600 dark:text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900 dark:text-white">{{ activity.description }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ activity.timestamp|timesince }} ago</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-500 dark:text-gray-400 py-4">No recent activity</p>
+                {% endfor %}
+            </div>
+
+            {% if admin.suspended_at %}
+            <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+                <h4 class="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-2">Suspension Details</h4>
+                <p class="text-sm text-yellow-600 dark:text-yellow-300 mb-1">Reason: {{ admin.suspension_reason|default:'No reason provided' }}</p>
+                <p class="text-xs text-yellow-500 dark:text-yellow-400">Suspended on: {{ admin.suspended_at|date:"M j, Y, g:i a" }}</p>
+                {% if admin.suspended_by %}
+                <p class="text-xs text-yellow-500 dark:text-yellow-400">Suspended by: {{ admin.suspended_by.full_name }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Suspend Modal -->
+<div id="suspendModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Suspend Administrator</h3>
+            <form method="post" action="" id="suspendForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Suspension</label>
+                    <textarea name="reason" class="form-textarea" rows="3" required placeholder="Enter reason for suspension..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeSuspendModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-full text-sm font-medium hover:bg-yellow-700 transition">
+                        Suspend Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="glass-card p-6 max-w-md w-full">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600 dark:text-red-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Administrator</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">This action cannot be undone. All admin data will be permanently deleted.</p>
+            </div>
+            <form method="post" action="" id="deleteForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Deletion</label>
+                    <textarea name="reason" class="form-textarea" rows="3" required placeholder="Enter reason for deletion..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium hover:bg-red-700 transition">
+                        Delete Permanently
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openSuspendModal(adminId) {
+    const form = document.getElementById('suspendForm');
+    form.action = `/admin-panel/admins/${adminId}/suspend/`;
+    document.getElementById('suspendModal').classList.remove('hidden');
+}
+
+function closeSuspendModal() {
+    document.getElementById('suspendModal').classList.add('hidden');
+}
+
+function openDeleteModal(adminId) {
+    const form = document.getElementById('deleteForm');
+    form.action = `/admin-panel/admins/${adminId}/delete/`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('suspendModal')) closeSuspendModal();
+    if (e.target === document.getElementById('deleteModal')) closeDeleteModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSuspendModal();
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

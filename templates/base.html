@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" class="{% if request.COOKIES.theme == 'dark' %}dark{% else %}light{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agora - Secure Voting Platform{% endblock %}</title>
+    
+    <!-- Theme initialization - runs before anything else -->
+    <script>
+        (function() {
+            try {
+                const storedTheme = localStorage.getItem('theme');
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if (storedTheme === 'dark' || (!storedTheme && systemPrefersDark)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {
+                console.error('Theme initialization failed:', e);
+            }
+        })();
+    </script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            dark: '#0B0B0C',
+                            DEFAULT: '#111213',
+                            light: '#1A1B1E',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Load static tag -->
+    {% load static %}
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-primary-dark text-gray-900 dark:text-white transition-colors duration-200 min-h-screen">
+    <!-- Debug info - remove after fixing -->
+    {% if debug %}
+    <div style="position: fixed; top: 0; left: 0; background: red; color: white; z-index: 9999; padding: 5px;">
+        User authenticated: {{ user.is_authenticated|yesno:"Yes,No" }} | 
+        User type: {% if user.is_authenticated %}{{ user.user_type }}{% else %}None{% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Navigation - Show for public (not logged in) and voters -->
+    {% if not user.is_authenticated %}
+        <!-- Public Navigation - User not logged in -->
+        {% include 'includes/navigation.html' %}
+        <!-- Spacer for floating navbar -->
+        <div class="h-20"></div>
+    {% elif user.is_authenticated and user.user_type == 'VOTER' %}
+        <!-- Voter Navigation - Logged in as voter -->
+        {% include 'includes/navigation.html' %}
+        <!-- Spacer for floating navbar -->
+        <div class="h-20"></div>
+    {% endif %}
+    <!-- For admins and super admins, no public navigation is shown -->
+    
+    <!-- Messages -->
+    {% include 'includes/messages.html' %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Scripts -->
+    <script src="{% static 'js/theme.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

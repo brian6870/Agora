@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Voting Area - Agora{% endblock %}
+
+{% block content %}
+<!-- Fixed navbar spacer - this pushes content below the fixed navbar -->
+<div class="h-24 md:h-28 lg:h-32"></div>
+
+<!-- Main scrollable content container -->
+<div class="fixed inset-0 top-24 md:top-28 lg:top-32 overflow-y-auto" style="z-index: 1;">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 dark:text-white mb-2">
+                Cast Your Vote
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400">
+                {{ election.name }} · {% if election.election_type == 'NATIONAL' %}National Election{% else %}{{ election.county }} County Election{% endif %}
+            </p>
+            
+            <!-- Voting Window Info -->
+            {% if election.voting_date %}
+            <div class="mt-4 flex items-center space-x-4 text-sm">
+                <span class="text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-calendar mr-2"></i>{{ election.voting_date|date:"l, F j, Y" }}
+                </span>
+                <span class="text-gray-600 dark:text-gray-400">
+                    <i class="fas fa-clock mr-2"></i>{{ election.voting_start_time|time:"g:i A" }} - {{ election.voting_end_time|time:"g:i A" }} EAT
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Voting Form -->
+        <form id="votingForm" method="post" class="space-y-8">
+            {% csrf_token %}
+            
+            <!-- Positions Loop -->
+            {% for ballot_item in ballot %}
+            <div class="bg-transparent backdrop-blur-xl border border-white/30 dark:border-white/20 rounded-2xl overflow-hidden">
+                <!-- Position Header -->
+                <div class="p-6 border-b border-white/30 dark:border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ ballot_item.position.name }}</h2>
+                            {% if ballot_item.position.description %}
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ ballot_item.position.description }}</p>
+                            {% endif %}
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                            Select 1
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Candidates Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">Select</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Candidate</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Team</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Info</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            {% for candidate in ballot_item.candidates %}
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer" onclick="selectCandidate('{{ ballot_item.position.id }}', '{{ candidate.id }}', this)">
+                                <td class="px-6 py-4">
+                                    <input type="radio" 
+                                           name="position_{{ ballot_item.position.id }}" 
+                                           value="{{ candidate.id }}" 
+                                           class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 focus:ring-gray-500 cursor-pointer"
+                                           onclick="event.stopPropagation()"
+                                           {% if ballot_item.candidates|length == 1 %}checked{% endif %}>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 overflow-hidden flex-shrink-0">
+                                            {% if candidate.photo %}
+                                            <img src="{{ candidate.photo.url }}" alt="{{ candidate.full_name }}" class="w-full h-full object-cover">
+                                            {% else %}
+                                            <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ candidate.full_name }}</div>
+                                            {% if candidate.bio %}
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{{ candidate.bio|truncatechars:50 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if candidate.team %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style="background-color: {{ candidate.team.color_code }}20; color: {{ candidate.team.color_code }}">
+                                        <span class="w-1.5 h-1.5 rounded-full mr-1" style="background-color: {{ candidate.team.color_code }}"></span>
+                                        {{ candidate.team.name }}
+                                        {% if candidate.team.acronym %}
+                                        <span class="ml-1 opacity-75">({{ candidate.team.acronym }})</span>
+                                        {% endif %}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Independent</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex space-x-2">
+                                        {% if candidate.bio %}
+                                        <button type="button" onclick="showBio('{{ candidate.full_name|escapejs }}', '{{ candidate.bio|escapejs }}'); event.stopPropagation()" 
+                                                class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                                            <i class="fas fa-user mr-1"></i>Bio
+                                        </button>
+                                        {% endif %}
+                                        {% if candidate.manifesto %}
+                                        <button type="button" onclick="showManifesto('{{ candidate.full_name|escapejs }}', '{{ candidate.manifesto|escapejs }}'); event.stopPropagation()" 
+                                                class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                                            <i class="fas fa-file-alt mr-1"></i>Manifesto
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    No candidates available for this position
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Auto-selected notice for unopposed -->
+                {% if ballot_item.candidates|length == 1 %}
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-t border-white/30 dark:border-white/10">
+                    <p class="text-xs text-blue-600 dark:text-blue-400">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        This position has only one candidate and has been automatically selected.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-12">
+                <div class="w-20 h-20 rounded-full bg-gray-200/50 dark:bg-gray-800/50 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-vote-yea text-3xl text-gray-500 dark:text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Positions Available</h3>
+                <p class="text-gray-600 dark:text-gray-400">There are no positions configured for this election.</p>
+            </div>
+            {% endfor %}
+
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-4">
+                <button type="submit" 
+                        class="px-8 py-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transform hover:scale-[0.98] transition-all duration-300">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Submit Vote
+                </button>
+            </div>
+        </form>
+
+        <!-- Footer Note -->
+        <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+            <i class="fas fa-shield-alt mr-1"></i>
+            Your vote is secure and anonymous
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast Container -->
+<div id="notificationContainer" class="fixed top-24 right-4 z-50 space-y-2 w-80"></div>
+
+<!-- Bio Modal -->
+<div id="bioModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBioModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl max-w-2xl w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="bioModalTitle">Biography</h3>
+                <button onclick="closeBioModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="bioContent" class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                <!-- Bio content will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manifesto Modal -->
+<div id="manifestoModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeManifestoModal()"></div>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl max-w-2xl w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="manifestoModalTitle">Manifesto</h3>
+                <button onclick="closeManifestoModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="manifestoContent" class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                <!-- Manifesto content will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Function to handle row click selection
+function selectCandidate(positionId, candidateId, row) {
+    // Find and check the radio button in this row
+    const radio = row.querySelector('input[type="radio"]');
+    if (radio) {
+        radio.checked = true;
+    }
+    
+    // Remove selected class from all rows in this position
+    const positionRows = document.querySelectorAll(`input[name="position_${positionId}"]`).forEach(radio => {
+        const row = radio.closest('tr');
+        if (row) {
+            row.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+        }
+    });
+    
+    // Add selected class to this row
+    row.classList.add('bg-gray-100', 'dark:bg-gray-700');
+}
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('notificationContainer');
+    const notification = document.createElement('div');
+    
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    
+    notification.className = `glass-card p-4 border-l-4 ${bgColor} notification-toast`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${icon} text-white mr-3"></i>
+            <p class="text-sm text-white">${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Modal functions
+function showBio(candidateName, bio) {
+    document.getElementById('bioModalTitle').textContent = candidateName + ' - Biography';
+    document.getElementById('bioContent').innerHTML = `<p>${bio}</p>`;
+    document.getElementById('bioModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBioModal() {
+    document.getElementById('bioModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function showManifesto(candidateName, manifesto) {
+    document.getElementById('manifestoModalTitle').textContent = candidateName + ' - Manifesto';
+    document.getElementById('manifestoContent').innerHTML = `<p>${manifesto}</p>`;
+    document.getElementById('manifestoModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeManifestoModal() {
+    document.getElementById('manifestoModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBioModal();
+        closeManifestoModal();
+    }
+});
+
+// Form submission
+document.getElementById('votingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+    
+    // Collect votes
+    const votes = {};
+    let allSelected = true;
+    let missingPositions = [];
+    
+    // Get all position containers
+    const positionContainers = document.querySelectorAll('.bg-transparent.backdrop-blur-xl');
+    
+    positionContainers.forEach((container, index) => {
+        const positionId = container.querySelector('input[type="radio"]')?.name.replace('position_', '');
+        const selectedRadio = container.querySelector('input[type="radio"]:checked');
+        
+        if (selectedRadio) {
+            votes[positionId] = selectedRadio.value;
+        } else {
+            allSelected = false;
+            const positionName = container.querySelector('h2')?.textContent || `Position ${index + 1}`;
+            missingPositions.push(positionName);
+        }
+    });
+    
+    // If not all positions are selected, show warning but don't block
+    if (!allSelected) {
+        const confirmMessage = `You haven't selected candidates for the following positions:\n- ${missingPositions.join('\n- ')}\n\nDo you still want to submit your vote?`;
+        if (!confirm(confirmMessage)) {
+            // Reset button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            return;
+        }
+    }
+    
+    // Submit vote
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ votes: votes })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err; });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('Your vote has been recorded successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = data.redirect || '/results/';
+            }, 1500);
+        } else {
+            showNotification(data.error || 'An error occurred. Please try again.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification(error.error || 'Network error. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+});
+
+// Auto-highlight pre-selected rows (for unopposed candidates)
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+        const row = radio.closest('tr');
+        if (row) {
+            row.classList.add('bg-gray-100', 'dark:bg-gray-700');
+        }
+    });
+});
+</script>
+
+<style>
+/* Custom scrollbar for the main content area */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Custom scrollbar for tables */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
+}
+
+/* Notification toast animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification-toast {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Table row hover effect */
+tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Selected row highlight */
+.bg-gray-100 {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark .dark\:bg-gray-700 {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Line clamp for bio preview */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Modal transitions */
+#bioModal, #manifestoModal {
+    transition: opacity 0.3s ease;
+}
+
+/* Ensure content is scrollable within modals */
+#bioContent, #manifestoContent {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+/* Custom scrollbar for modal content */
+#bioContent::-webkit-scrollbar,
+#manifestoContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+#bioContent::-webkit-scrollbar-track,
+#manifestoContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#bioContent::-webkit-scrollbar-thumb,
+#manifestoContent::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 3px;
+}
+</style>
+{% endblock %}

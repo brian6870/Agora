@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Request Submitted - Agora{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Star Background */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    
+    .star {
+        position: absolute;
+        border-radius: 50%;
+        animation: twinkle 4s ease-in-out infinite;
+    }
+    
+    .light .star {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .dark .star {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    /* Scroll Container */
+    .scroll-container {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+        background: transparent;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .scroll-inner {
+        width: 100%;
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        background: transparent;
+    }
+    
+    .scroll-content {
+        width: 100%;
+        padding: 2rem 0;
+        min-height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Glass Card */
+    .glass-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1.5rem;
+        transition: all 300ms;
+        padding: 2rem;
+    }
+    
+    .dark .glass-card {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Icon Container */
+    .icon-container {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .dark .icon-container {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Info Box */
+    .info-box {
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 0.75rem;
+        background: transparent;
+        text-align: left;
+    }
+    
+    .dark .info-box {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background-color: #111827;
+        color: white;
+        border-radius: 9999px;
+        font-size: 1rem;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 300ms;
+        border: 2px solid transparent;
+    }
+    
+    .dark .btn-primary {
+        background-color: white;
+        color: #111827;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #D1D5DB;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Star Background -->
+<div class="stars-container" id="stars"></div>
+
+<!-- Scroll Container -->
+<div class="scroll-container">
+    <div class="scroll-inner">
+        <div class="scroll-content">
+            <div class="w-full max-w-lg mx-auto text-center">
+                <div class="glass-card">
+                    <div class="icon-container">
+                        <i class="fas fa-paper-plane text-3xl text-blue-500"></i>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                        Request Submitted
+                    </h2>
+                    
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">
+                        Your device reset request has been received and is pending review.
+                    </p>
+                    
+                    <div class="info-box mb-6">
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                            <i class="fas fa-clock mr-2"></i>
+                            Requests are typically processed within 24 hours. You'll receive an email once approved.
+                        </p>
+                    </div>
+                    
+                    <a href="{% url 'landing' %}" class="btn-primary">
+                        Return Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Create stars
+function createStars() {
+    const starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
+    
+    starsContainer.innerHTML = '';
+    const starCount = 200;
+    
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        
+        const size = Math.random() * 2 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        
+        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        
+        starsContainer.appendChild(star);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', createStars);
+document.addEventListener('themeChanged', createStars);
+</script>
+{% endblock %}

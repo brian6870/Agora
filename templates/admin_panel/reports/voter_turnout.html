@@ -1,0 +1,326 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Voter Turnout Report - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Voter Turnout Report</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Analyze voter participation and demographics</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="exportReport('pdf')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+            </button>
+            <button onclick="exportReport('csv')" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <i class="fas fa-file-csv mr-2"></i>Export CSV
+            </button>
+            <button onclick="printReport()" class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                <i class="fas fa-print mr-2"></i>Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="glass-card p-6 mb-8">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
+                <select name="range" class="form-select" onchange="this.form.submit()">
+                    <option value="today" {% if range == 'today' %}selected{% endif %}>Today</option>
+                    <option value="week" {% if range == 'week' %}selected{% endif %}>This Week</option>
+                    <option value="month" {% if range == 'month' %}selected{% endif %}>This Month</option>
+                    <option value="custom" {% if range == 'custom' %}selected{% endif %}>Custom Range</option>
+                </select>
+            </div>
+            <div id="customRange" class="flex gap-4 {% if range != 'custom' %}hidden{% endif %}">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">From</label>
+                    <input type="date" name="from" value="{{ from_date }}" class="form-input">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">To</label>
+                    <input type="date" name="to" value="{{ to_date }}" class="form-input">
+                </div>
+            </div>
+            <div>
+                <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Registered</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_registered }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Total Voted</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_voted }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Overall Turnout</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ overall_turnout }}%</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Remaining</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ remaining_voters }}</p>
+        </div>
+    </div>
+
+    <!-- Turnout Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Hourly Turnout -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Hourly Turnout</h2>
+            <div class="h-80" id="hourlyChart"></div>
+        </div>
+
+        <!-- Daily Trend -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Daily Trend</h2>
+            <div class="h-80" id="dailyChart"></div>
+        </div>
+    </div>
+
+    <!-- Turnout by County -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Turnout by County</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">County</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Registered</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Voted</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Turnout</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">vs Average</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for county in county_stats %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4 text-sm text-gray-900 dark:text-white">{{ county.name }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ county.registered }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ county.voted }}</td>
+                        <td class="py-3 px-4 text-sm">
+                            <div class="flex items-center">
+                                <span class="font-medium {% if county.turnout > 70 %}text-green-600{% elif county.turnout > 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                    {{ county.turnout }}%
+                                </span>
+                                <div class="ml-3 w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-gray-900 dark:bg-white h-2 rounded-full" style="width: {{ county.turnout }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm">
+                            {% if county.vs_average > 0 %}
+                            <span class="text-green-600">+{{ county.vs_average }}%</span>
+                            {% elif county.vs_average < 0 %}
+                            <span class="text-red-600">{{ county.vs_average }}%</span>
+                            {% else %}
+                            <span class="text-gray-500">0%</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Demographic Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Turnout by Age Group -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Turnout by Age Group</h2>
+            <div class="space-y-4">
+                {% for age in age_groups %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">{{ age.group }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ age.turnout }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div class="bg-gray-900 dark:bg-white h-2 rounded-full" style="width: {{ age.turnout }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Turnout by Gender -->
+        <div class="glass-card p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Turnout by Gender</h2>
+            <div class="space-y-4">
+                {% for gender in gender_stats %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">{{ gender.label }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ gender.percentage }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div class="bg-gray-900 dark:bg-white h-2 rounded-full" style="width: {{ gender.percentage }}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ gender.count }} voters</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Peak Voting Times -->
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Peak Voting Times</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <i class="fas fa-sun text-yellow-500 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Morning Peak</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ morning_peak }}</p>
+                <p class="text-xs text-gray-500">{{ morning_votes }} votes</p>
+            </div>
+            <div class="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <i class="fas fa-cloud-sun text-orange-500 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Afternoon Peak</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ afternoon_peak }}</p>
+                <p class="text-xs text-gray-500">{{ afternoon_votes }} votes</p>
+            </div>
+            <div class="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <i class="fas fa-moon text-blue-500 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Evening Peak</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">{{ evening_peak }}</p>
+                <p class="text-xs text-gray-500">{{ evening_votes }} votes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Toggle custom date range
+document.querySelector('select[name="range"]').addEventListener('change', function() {
+    const customRange = document.getElementById('customRange');
+    if (this.value === 'custom') {
+        customRange.classList.remove('hidden');
+    } else {
+        customRange.classList.add('hidden');
+    }
+});
+
+// Initialize hourly chart
+const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+new Chart(hourlyCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ hourly_labels|safe }},
+        datasets: [{
+            label: 'Votes Cast',
+            data: {{ hourly_data|safe }},
+            backgroundColor: '#111827',
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Initialize daily chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ daily_labels|safe }},
+        datasets: [{
+            label: 'Daily Turnout',
+            data: {{ daily_data|safe }},
+            borderColor: '#111827',
+            backgroundColor: 'rgba(17, 24, 39, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+function exportReport(format) {
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = `/admin-panel/reports/export/voter-turnout/?format=${format}&${params.toString()}`;
+}
+
+function printReport() {
+    window.print();
+}
+
+// Print styles
+const style = document.createElement('style');
+style.innerHTML = `
+    @media print {
+        .admin-sidebar, .admin-nav-link, .btn, footer, .no-print {
+            display: none !important;
+        }
+        .admin-content {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+        .glass-card {
+            border: 1px solid #ddd !important;
+            background: white !important;
+            backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

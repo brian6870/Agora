@@ -1,0 +1,233 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ action_name }} Audit Logs - Agora{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+        <a href="{% url 'admin_panel:audit_logs' %}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Audit Logs
+        </a>
+    </div>
+
+    <!-- Action Header -->
+    <div class="glass-card p-6 mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ action_name }}</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Audit logs for this specific action type</p>
+            </div>
+            <div class="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total: {{ total_count }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Today</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ today_count }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">This Week</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ week_count }}</p>
+        </div>
+        <div class="glass-card p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">This Month</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ month_count }}</p>
+        </div>
+    </div>
+
+    <!-- Action Distribution Chart -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Action Distribution Over Time</h2>
+        <div class="h-80" id="actionChart"></div>
+    </div>
+
+    <!-- Top Users for this Action -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Top Users Performing This Action</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for user_stat in top_users %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-user text-gray-600 dark:text-gray-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user_stat.user__full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ user_stat.user__user_type }}</p>
+                    </div>
+                </div>
+                <span class="text-lg font-bold text-gray-900 dark:text-white">{{ user_stat.count }}</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 col-span-3 text-center py-4">No user data available</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card p-6 mb-8">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date From</label>
+                <input type="date" name="from" value="{{ from_date }}" class="form-input">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date To</label>
+                <input type="date" name="to" value="{{ to_date }}" class="form-input">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">User</label>
+                <input type="text" name="user" value="{{ user_filter }}" class="form-input" placeholder="Filter by user">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">IP Address</label>
+                <input type="text" name="ip" value="{{ ip_filter }}" class="form-input" placeholder="Filter by IP">
+            </div>
+            <div class="flex items-end space-x-2">
+                <button type="submit" class="px-6 py-2 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition">
+                    Apply Filters
+                </button>
+                <a href="{% url 'admin_panel:action_audit_logs' action %}" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Action Logs Table -->
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Action Logs</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Timestamp</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">User</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">User Type</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">IP Address</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Category</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500 dark:text-gray-400">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ log.user.full_name|default:'System' }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ log.user.user_type|default:'System' }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">{{ log.ip_address|default:'N/A' }}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 
+                                {% if log.category == 'USER' %}bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400
+                                {% elif log.category == 'ADMIN' %}bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400
+                                {% elif log.category == 'ELECTION' %}bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400
+                                {% elif log.category == 'VOTING' %}bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400
+                                {% elif log.category == 'KYC' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400
+                                {% elif log.category == 'SECURITY' %}bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400
+                                {% else %}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400{% endif %} 
+                                rounded-full text-xs">
+                                {{ log.get_category_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <a href="{% url 'admin_panel:audit_log_detail' log.id %}" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-search fa-3x mb-3 opacity-50"></i>
+                            <p>No logs found for this action</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="flex justify-center mt-6">
+            <nav class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if from_date %}&from={{ from_date }}{% endif %}{% if to_date %}&to={{ to_date }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Previous
+                </a>
+                {% endif %}
+                
+                <span class="px-3 py-1 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-full text-sm">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if from_date %}&from={{ from_date }}{% endif %}{% if to_date %}&to={{ to_date }}{% endif %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    Next
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Action Timeline Chart
+const ctx = document.getElementById('actionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ timeline_labels|safe }},
+        datasets: [{
+            label: '{{ action_name }}',
+            data: {{ timeline_data|safe }},
+            backgroundColor: '#111827',
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Export functionality
+function exportLogs(format) {
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = `/admin-panel/audit/export-action/{{ action }}/?format=${format}&${params.toString()}`;
+}
+</script>
+{% endblock %}
