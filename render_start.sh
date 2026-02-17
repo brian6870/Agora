@@ -13,6 +13,16 @@ export DJANGO_SETTINGS_MODULE=agora_backend.settings
 # Run database migrations FIRST (critical)
 echo "📦 Running database migrations..."
 python manage.py migrate --noinput
+echo "🔍 Checking if database needs seeding..."
+python manage.py shell -c "
+from apps.accounts.models import User
+import sys
+if User.objects.count() == 0:
+    print('🌱 Database empty - running seed script...')
+    exec(open('scripts/seed_production_data.py').read())
+else:
+    print(f'📊 Database has {User.objects.count()} users - skipping seed')
+"
 
 # Collect static files
 # Add this before collecting static files
