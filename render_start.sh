@@ -15,6 +15,9 @@ echo "📦 Running database migrations..."
 python manage.py migrate --noinput
 
 # Collect static files
+# Add this before collecting static files
+echo "📁 Creating static directories..."
+mkdir -p static/css static/js static/images
 echo "📁 Collecting static files..."
 python manage.py collectstatic --noinput
 
