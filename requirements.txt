@@ -14,3 +14,4 @@ django-ratelimit
 django-crispy-forms
 crispy-bootstrap5
 whitenoise
+dj-database-url
