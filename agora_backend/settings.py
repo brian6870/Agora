@@ -58,10 +58,18 @@ if env_file.exists():
                 key, value = line.strip().split('=', 1)
                 os.environ.setdefault(key, value)
 
-# Security
+# Security - FIXED: removed extra argument
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1','agora-86ue.onrender.com', cast=Csv())
+
+# FIXED: ALLOWED_HOSTS should be a comma-separated string
+# You can set it in environment variables or use this default
+DEFAULT_ALLOWED_HOSTS = 'localhost,127.0.0.1'
+# Add Render domain if in production
+if not DEBUG:
+    DEFAULT_ALLOWED_HOSTS += ',.onrender.com,agora-86ue.onrender.com'
+
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEFAULT_ALLOWED_HOSTS, cast=Csv())
 
 # Application definition
 INSTALLED_APPS = [
@@ -235,7 +243,7 @@ if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
     ]
     # Add your production domain when DEBUG=False
     if not DEBUG:
-        CSRF_TRUSTED_ORIGINS.append('https://agora-86ue.onrender.com')  # Update with your actual domain
+        CSRF_TRUSTED_ORIGINS.append('https://agora-86ue.onrender.com')
 
 # MIME types for development
 if DEBUG:
@@ -297,6 +305,7 @@ if DEBUG:
     print("="*50)
     print(f"Using python-decouple: {USING_DECOUPLE}")
     print(f"DEBUG: {DEBUG}")
+    print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
     print(f"Database: {DATABASES['default']['NAME']}")
     print(f"Email Host: {EMAIL_HOST or 'Not configured'}")
     print(f"OTP Rate Limit: {OTP_RATE_LIMIT} per {OTP_RATE_LIMIT_PERIOD//3600} hours")
