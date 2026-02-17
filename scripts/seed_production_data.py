@@ -235,7 +235,6 @@ class ProductionDataSeeder:
                 'is_staff': True,
                 'is_superuser': True,
                 'email_verified': True,
-                'phone_verified': True,
                 'county': 'Nairobi',
                 'password': make_password(SUPER_ADMIN_PASSWORD)
             }
@@ -261,7 +260,6 @@ class ProductionDataSeeder:
                 'is_active': True,
                 'is_staff': True,
                 'email_verified': True,
-                'phone_verified': True,
                 'county': 'Nairobi',
                 'password': make_password(ADMIN_PASSWORD)
             }
@@ -286,7 +284,6 @@ class ProductionDataSeeder:
                 'account_status': 'ACTIVE',
                 'is_active': True,
                 'email_verified': True,
-                'phone_verified': True,
                 'county': 'Tharaka Nithi',
                 'password': make_password(VOTER_PASSWORD)
             }
@@ -315,7 +312,6 @@ class ProductionDataSeeder:
                     'account_status': 'ACTIVE',
                     'is_active': True,
                     'email_verified': True,
-                    'phone_verified': True,
                     'county': 'Tharaka Nithi',
                     'password': make_password('Voter@2026')
                 }
@@ -441,12 +437,19 @@ class ProductionDataSeeder:
             user_type='VOTER',
             county='Tharaka Nithi',
             kyc_status='VERIFIED'
-        )) + [self.voter]
+        )) + [self.voter] if self.voter else []
+        
+        if not voters:
+            print("  ⚠️ No voters found, skipping voting simulation")
+            return
         
         print(f"  Simulating votes for {len(voters)} voters...")
         
         votes_created = 0
         for voter in voters:
+            if not voter:
+                continue
+                
             # Create a vote for this voter
             vote = Vote.objects.create(
                 election=self.election,
@@ -479,17 +482,18 @@ class ProductionDataSeeder:
                     
                     # Normalize weights
                     total = sum(weights)
-                    weights = [w/total for w in weights]
-                    
-                    # Select candidate
-                    selected = random.choices(position_candidates, weights=weights)[0]
-                    
-                    # Add to vote
-                    vote.candidates.add(selected)
-                    
-                    # Increment candidate vote count
-                    selected.vote_count += 1
-                    selected.save()
+                    if total > 0:
+                        weights = [w/total for w in weights]
+                        
+                        # Select candidate
+                        selected = random.choices(position_candidates, weights=weights)[0]
+                        
+                        # Add to vote
+                        vote.candidates.add(selected)
+                        
+                        # Increment candidate vote count
+                        selected.vote_count += 1
+                        selected.save()
             
             # Update voter status
             voter.has_voted = True
@@ -554,8 +558,7 @@ class ProductionDataSeeder:
         print(f"  Status: COMPLETED")
         print(f"  Positions: {len(POSITIONS)}")
         print(f"  Teams: {len(TEAMS)}")
-        print(f"  Total Voters: {User.objects.filter(user_type='VOTER', county='Tharaka Nithi').count() + 1}")
-        print(f"  Votes Cast: {self.election.total_votes_cast}")
+        print(f"  Votes Cast: {self.election.total_votes_cast if self.election else 0}")
         print("="*60)
 
 
