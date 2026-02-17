@@ -235,7 +235,7 @@ if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
     ]
     # Add your production domain when DEBUG=False
     if not DEBUG:
-        CSRF_TRUSTED_ORIGINS.append('https://agora-voting.onrender.com')  # Update with your actual domain
+        CSRF_TRUSTED_ORIGINS.append('https://agora-86ue.onrender.com')  # Update with your actual domain
 
 # MIME types for development
 if DEBUG:
