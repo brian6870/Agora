@@ -8,70 +8,48 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Add the project directory to Python path
 sys.path.append(str(BASE_DIR))
 
-# Try to import decouple, but if it fails, use a simple environment variable fallback
-try:
-    from decouple import config, Csv
-    USING_DECOUPLE = True
-except ImportError:
-    # Simple fallback for when decouple is not available
-    USING_DECOUPLE = False
-    
-    def config(key, default=None, cast=None):
-        """Fallback config function when python-decouple is not installed"""
-        value = os.environ.get(key)
-        if value is None:
-            return default
-        if cast == bool:
-            return value.lower() in ('true', '1', 'yes', 'on', 't')
-        if cast == int:
-            try:
-                return int(value)
-            except (ValueError, TypeError):
-                return default
-        if cast == float:
-            try:
-                return float(value)
-            except (ValueError, TypeError):
-                return default
-        return value
-    
-    def Csv(cast=None):
-        """Fallback Csv function when python-decouple is not installed"""
-        def parse(value):
-            if value is None:
-                return []
-            if isinstance(value, (list, tuple)):
-                return value
-            items = [x.strip() for x in str(value).split(',') if x.strip()]
-            if cast:
-                return [cast(x) for x in items]
-            return items
-        return parse
+# ==================== ENVIRONMENT VARIABLES ====================
+# Simple environment variable handling
+def get_env(key, default=None):
+    """Simple environment variable getter"""
+    return os.environ.get(key, default)
 
-# Initialize environment variables (moved after BASE_DIR is defined)
-# Read .env file if it exists
-env_file = BASE_DIR / '.env'
-if env_file.exists():
-    with open(env_file) as f:
-        for line in f:
-            if '=' in line and not line.startswith('#'):
-                key, value = line.strip().split('=', 1)
-                os.environ.setdefault(key, value)
+def get_env_bool(key, default=False):
+    """Get boolean from environment"""
+    value = os.environ.get(key, str(default)).lower()
+    return value in ('true', '1', 'yes', 'on', 't')
 
-# Security - FIXED: removed extra argument
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
-DEBUG = config('DEBUG', default=True, cast=bool)
+def get_env_int(key, default=0):
+    """Get integer from environment"""
+    try:
+        return int(os.environ.get(key, default))
+    except (ValueError, TypeError):
+        return default
 
-# FIXED: ALLOWED_HOSTS should be a comma-separated string
-# You can set it in environment variables or use this default
-DEFAULT_ALLOWED_HOSTS = 'agora-86ue.onrender.com,localhost,'
-# Add Render domain if in production
-if not DEBUG:
-    DEFAULT_ALLOWED_HOSTS += 'agora-86ue.onrender.com'
+def get_env_list(key, default=''):
+    """Get list from comma-separated environment variable"""
+    value = os.environ.get(key, default)
+    if not value:
+        return []
+    return [item.strip() for item in value.split(',') if item.strip()]
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEFAULT_ALLOWED_HOSTS, cast=Csv())
+# ==================== CORE SETTINGS ====================
+SECRET_KEY = get_env('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
+DEBUG = get_env_bool('DEBUG', False)
 
-# Application definition
+# ALLOWED_HOSTS - from environment variable
+ALLOWED_HOSTS = get_env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+
+# Add Render domain if present in environment
+RENDER_EXTERNAL_HOSTNAME = get_env('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Always add common Render pattern
+if '.onrender.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('.onrender.com')
+
+# ==================== APPLICATION DEFINITION ====================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -123,87 +101,69 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agora_backend.wsgi.application'
 
-# Database Configuration
+# ==================== DATABASE ====================
 import dj_database_url
 
-# Default SQLite for development
 if DEBUG:
+    # Development: SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'agora.db',
-            'OPTIONS': {
-                'timeout': 20,
-            }
         }
     }
 else:
-    # Production database from DATABASE_URL environment variable
+    # Production: Use DATABASE_URL from Render
     DATABASES = {
         'default': dj_database_url.config(
-            default='sqlite:///' + str(BASE_DIR / 'agora.db'),
             conn_max_age=600,
             ssl_require=True
         )
     }
 
-# Custom user model
+# ==================== AUTHENTICATION ====================
 AUTH_USER_MODEL = 'accounts.User'
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'core:dashboard'
+
+# ==================== INTERNATIONALIZATION ====================
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# ==================== STATIC & MEDIA FILES ====================
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Login URLs
-LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'core:dashboard'
-
-# Email settings - Load from environment variables
+# ==================== EMAIL SETTINGS ====================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@agora.ke')
+EMAIL_HOST = get_env('EMAIL_HOST', '')
+EMAIL_PORT = get_env_int('EMAIL_PORT', 587)
+EMAIL_USE_TLS = get_env_bool('EMAIL_USE_TLS', True)
+EMAIL_USE_SSL = get_env_bool('EMAIL_USE_SSL', False)
+EMAIL_HOST_USER = get_env('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = get_env('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = get_env('DEFAULT_FROM_EMAIL', 'noreply@agora.ke')
 
-# Rate limiting settings
-OTP_RATE_LIMIT = config('OTP_RATE_LIMIT', default=3, cast=int)
-OTP_RATE_LIMIT_PERIOD = config('OTP_RATE_LIMIT_PERIOD', default=86400, cast=int)  # 24 hours in seconds
+# ==================== RATE LIMITING ====================
+OTP_RATE_LIMIT = get_env_int('OTP_RATE_LIMIT', 3)
+OTP_RATE_LIMIT_PERIOD = get_env_int('OTP_RATE_LIMIT_PERIOD', 86400)  # 24 hours
 
-# Cache settings
+# ==================== CACHE ====================
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -211,46 +171,47 @@ CACHES = {
     }
 }
 
-# Maximum file upload size (10MB)
-MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+# ==================== SECURITY SETTINGS ====================
+# Security headers from environment (with production defaults)
+SESSION_COOKIE_SECURE = get_env_bool('SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SECURE = get_env_bool('CSRF_COOKIE_SECURE', not DEBUG)
+SECURE_SSL_REDIRECT = get_env_bool('SECURE_SSL_REDIRECT', not DEBUG)
 
-# Security headers - Set based on DEBUG
-if not DEBUG:
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-else:
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
-    SECURE_SSL_REDIRECT = False
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
+# HSTS settings
+SECURE_HSTS_SECONDS = get_env_int('SECURE_HSTS_SECONDS', 31536000 if not DEBUG else 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = get_env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', not DEBUG)
+SECURE_HSTS_PRELOAD = get_env_bool('SECURE_HSTS_PRELOAD', not DEBUG)
 
+# Always-on security headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# CSRF trusted origins
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
-if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
-    CSRF_TRUSTED_ORIGINS = [
+# ==================== CSRF TRUSTED ORIGINS ====================
+CSRF_TRUSTED_ORIGINS = get_env_list('CSRF_TRUSTED_ORIGINS', '')
+
+# Auto-generate CSRF trusted origins from ALLOWED_HOSTS if not set
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = []
+    for host in ALLOWED_HOSTS:
+        if host.startswith('.'):
+            # For wildcard subdomains like .onrender.com
+            CSRF_TRUSTED_ORIGINS.append(f'https://{host.lstrip(".")}')
+            CSRF_TRUSTED_ORIGINS.append(f'https://*{host}')
+        elif host not in ['localhost', '127.0.0.1']:
+            CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
+    
+    # Always add localhost for development
+    CSRF_TRUSTED_ORIGINS.extend([
         'http://localhost:8000',
         'http://127.0.0.1:8000',
-    ]
-    # Add your production domain when DEBUG=False
-    if not DEBUG:
-        CSRF_TRUSTED_ORIGINS.append('https://agora-86ue.onrender.com')
+    ])
 
-# MIME types for development
-if DEBUG:
-    import mimetypes
-    mimetypes.add_type("application/javascript", ".js", True)
+# ==================== FILE UPLOADS ====================
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 
-# Logging configuration
+# ==================== LOGGING ====================
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -295,18 +256,20 @@ LOGGING = {
 
 # Create logs directory if it doesn't exist
 logs_dir = BASE_DIR / 'logs'
-if not logs_dir.exists():
-    logs_dir.mkdir(parents=True, exist_ok=True)
+logs_dir.mkdir(parents=True, exist_ok=True)
 
-# Print configuration status for debugging
-if DEBUG:
-    print("\n" + "="*50)
-    print("AGORA CONFIGURATION")
-    print("="*50)
-    print(f"Using python-decouple: {USING_DECOUPLE}")
-    print(f"DEBUG: {DEBUG}")
-    print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
-    print(f"Database: {DATABASES['default']['NAME']}")
-    print(f"Email Host: {EMAIL_HOST or 'Not configured'}")
-    print(f"OTP Rate Limit: {OTP_RATE_LIMIT} per {OTP_RATE_LIMIT_PERIOD//3600} hours")
-    print("="*50 + "\n")
+# ==================== DEBUG OUTPUT ====================
+print("\n" + "="*60)
+print("🚀 AGORA VOTING SYSTEM CONFIGURATION")
+print("="*60)
+print(f"🔧 DEBUG Mode: {DEBUG}")
+print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+print(f"🔒 CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
+print(f"🗄️ Database: {'PostgreSQL' if not DEBUG else 'SQLite'}")
+print(f"📧 Email Host: {EMAIL_HOST}")
+print(f"📧 Email User: {EMAIL_HOST_USER}")
+print(f"🔐 SESSION_COOKIE_SECURE: {SESSION_COOKIE_SECURE}")
+print(f"🔐 CSRF_COOKIE_SECURE: {CSRF_COOKIE_SECURE}")
+print(f"🔐 SECURE_SSL_REDIRECT: {SECURE_SSL_REDIRECT}")
+print(f"⏱️  OTP Rate Limit: {OTP_RATE_LIMIT} per {OTP_RATE_LIMIT_PERIOD//3600} hours")
+print("="*60 + "\n")
