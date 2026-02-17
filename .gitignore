@@ -264,11 +264,7 @@ local_settings.py
 .env.production
 .env.development
 
-# Static & Media
-static/
-media/
-staticfiles/
-mediafiles/
+
 
 # Backups
 backups/

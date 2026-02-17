@@ -1,0 +1,145 @@
+/* static/css/voting.css */
+/* Voting Area Specific Styles */
+
+.candidate-card {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-surface);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.candidate-card:hover {
+    border-color: var(--accent-color);
+    background: var(--bg-primary);
+}
+
+.candidate-card.selected {
+    border-color: var(--accent-color);
+    background: rgba(30, 58, 138, 0.05);
+}
+
+.candidate-photo {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.candidate-info {
+    flex: 1;
+}
+
+.candidate-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.candidate-team {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: white;
+    margin-left: 8px;
+}
+
+.vote-progress {
+    position: sticky;
+    top: 80px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    z-index: 5;
+}
+
+.position-counter {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.progress-bar-container {
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--accent-color);
+    transition: width 0.3s;
+}
+
+.review-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.review-modal.active {
+    display: flex;
+}
+
+.review-modal-content {
+    background: var(--bg-surface);
+    border-radius: 8px;
+    padding: 32px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.vote-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vote-summary-item:last-child {
+    border-bottom: none;
+}
+
+.vote-navigation {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.vote-navigation button {
+    flex: 1;
+    padding: 12px;
+}
+
+/* Review page specific */
+.review-page .candidate-card {
+    cursor: default;
+    border-color: var(--border-color);
+    background: var(--bg-surface);
+}
+
+.review-page .candidate-card:hover {
+    transform: none;
+    border-color: var(--border-color);
+}
