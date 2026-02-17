@@ -64,10 +64,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 # FIXED: ALLOWED_HOSTS should be a comma-separated string
 # You can set it in environment variables or use this default
-DEFAULT_ALLOWED_HOSTS = 'localhost,127.0.0.1'
+DEFAULT_ALLOWED_HOSTS = 'agora-86ue.onrender.com,localhost,'
 # Add Render domain if in production
 if not DEBUG:
-    DEFAULT_ALLOWED_HOSTS += ',.onrender.com,agora-86ue.onrender.com'
+    DEFAULT_ALLOWED_HOSTS += 'agora-86ue.onrender.com'
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=DEFAULT_ALLOWED_HOSTS, cast=Csv())
 
