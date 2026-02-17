@@ -1,18 +1,12 @@
 import os
-import environ
+import sys
 from pathlib import Path
 
-# Initialize environment variables
-env = environ.Env(
-    DEBUG=(bool, False)
-)
-
-# Read .env file if it exists
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
-import os
-from pathlib import Path
-
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Add the project directory to Python path
+sys.path.append(str(BASE_DIR))
 
 # Try to import decouple, but if it fails, use a simple environment variable fallback
 try:
@@ -53,6 +47,16 @@ except ImportError:
                 return [cast(x) for x in items]
             return items
         return parse
+
+# Initialize environment variables (moved after BASE_DIR is defined)
+# Read .env file if it exists
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    with open(env_file) as f:
+        for line in f:
+            if '=' in line and not line.startswith('#'):
+                key, value = line.strip().split('=', 1)
+                os.environ.setdefault(key, value)
 
 # Security
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
@@ -111,30 +115,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'agora_backend.wsgi.application'
 
-# Database
-
-
-# ==================== DATABASE CONFIGURATION ====================
-# Use environment variable for database URL in production
+# Database Configuration
 import dj_database_url
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'agora.db'),
-        conn_max_age=600,
-        ssl_require=not DEBUG  # Require SSL in production
-    )
-}
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'agora.db',
-        'OPTIONS': {
-            'timeout': 20,
+# Default SQLite for development
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'agora.db',
+            'OPTIONS': {
+                'timeout': 20,
+            }
         }
     }
-}
+else:
+    # Production database from DATABASE_URL environment variable
+    DATABASES = {
+        'default': dj_database_url.config(
+            default='sqlite:///' + str(BASE_DIR / 'agora.db'),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
 
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
@@ -203,18 +206,36 @@ CACHES = {
 # Maximum file upload size (10MB)
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
-# Security headers
+# Security headers - Set based on DEBUG
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
 
-# Add HSTS settings for production
-SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
-SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
+    # Add your production domain when DEBUG=False
+    if not DEBUG:
+        CSRF_TRUSTED_ORIGINS.append('https://agora-voting.onrender.com')  # Update with your actual domain
 
 # MIME types for development
 if DEBUG:
@@ -242,7 +263,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+            'filename': str(BASE_DIR / 'logs' / 'django.log'),
             'formatter': 'verbose',
         },
     },
@@ -265,8 +286,9 @@ LOGGING = {
 }
 
 # Create logs directory if it doesn't exist
-if not os.path.exists(BASE_DIR / 'logs'):
-    os.makedirs(BASE_DIR / 'logs')
+logs_dir = BASE_DIR / 'logs'
+if not logs_dir.exists():
+    logs_dir.mkdir(parents=True, exist_ok=True)
 
 # Print configuration status for debugging
 if DEBUG:
@@ -279,13 +301,3 @@ if DEBUG:
     print(f"Email Host: {EMAIL_HOST or 'Not configured'}")
     print(f"OTP Rate Limit: {OTP_RATE_LIMIT} per {OTP_RATE_LIMIT_PERIOD//3600} hours")
     print("="*50 + "\n")
-# CSRF trusted origins (add your domain here)
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
-if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
-    CSRF_TRUSTED_ORIGINS = [
-        'http://localhost:8000',
-        'http://127.0.0.1:8000',
-    ]
-    # Add your production domain when DEBUG=False
-    if not DEBUG:
-        CSRF_TRUSTED_ORIGINS.append('https://your-domain.onrender.com')
